@@ -31,7 +31,14 @@ const local2Remote = (config) => {
 
 // 平台数据转换为本地代码
 const remote2Local = (config, withMerge) => {
-  return src(config.remoteGlob)
+  let stream = src(config.remoteGlob)
+  // 不同步更新远程的中文文本
+  if (onlyTemplate) {
+    stream = stream.pipe(filter(file => {
+      return !config.isRemoteTemplate(file.path)
+    }))
+  }
+  return stream
     .pipe(count(config, config.remoteGlob))
     .pipe(convertRemote(config, withMerge))
     .pipe(dest((file) => file.base));

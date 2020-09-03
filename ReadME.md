@@ -6,6 +6,8 @@ gulp l2r # 本地同步到远程
 gulp l2r -t # 或者 gulp l2r --template 仅同步中文
 gulp r2l # 远程同步到本地
 gulp r2l -m # 或者 gulp r2l --merge 远程同步到本地，并在本地自动合并
+gulp r2l -t # 转换时，排除中文文件，如果你在本地增加了一些中文文本，并且还不想现在就放到翻译平台上，那么可以使用这个命令不更新中文文本
+gulp r2l -m -t
 gulp check remote-key # 检查远程仓库中，多余的key，比如，中文文件中，没有foo这个key，但是英文文件中有这个key
 gulp check properties # 检查jsp中script元素中引用的properties中是否含有引号。因为jsp插值不会转义单引号和双引号，因此，当properties的插件插入js中后，会造成解析错误。
 ```

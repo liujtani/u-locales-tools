@@ -131,6 +131,11 @@ class Config {
       return false;
     }
   }
+
+  isRemoteTemplate(path) {
+    const seps = path.split(Path.sep);
+    return seps[seps.length - 2] === templates
+  }
 }
 
 Config.remoteBasepath = remoteBasepath;
