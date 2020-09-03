@@ -76,25 +76,5 @@ const r2l = parallel([
 exports.l2r = l2r;
 exports.r2l = r2l;
 
-const check = (callback) => {
-  const set = new Set(argv._);
-  const tasks = {
-    remoteKey: checkRemoteKey,
-    properties: checkProperties
-  };
-  const arr = Object.keys(tasks).reduce((arr, key) => {
-    if (set.has(key)) {
-      tasks[key].displayName = key;
-      arr.push(tasks[key]);
-    }
-    return arr;
-  }, []);
-  if (arr.length === 0) {
-    console.warn('没有指定任何检查任务');
-    callback();
-  } else {
-    return series(arr);
-  }
-};
-
-exports.check = check;
+exports['check-remote-key'] = checkRemoteKey;
+exports['check-properties'] = checkProperties
