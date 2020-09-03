@@ -85,5 +85,8 @@ module.exports.checkProperties = async () => {
   Object.keys(result).forEach((key) => {
     result[key] = [...result[key]];
   });
-  await fsp.writeFile('./properties.json', JSON.stringify(result, null, 2));
+  try {
+    await fsp.mkdir('./.log')
+  } catch (e) {}
+  await fsp.writeFile('./.log/properties.json', JSON.stringify(result, null, 2));
 };
