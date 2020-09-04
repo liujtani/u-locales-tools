@@ -2,21 +2,18 @@ const last= require('lodash/last');
 const { requirejs } = require('../utils/types');
 const Path = require('path');
 const fs = require('fs');
-const { remoteBasepath } = require('../config');
+
+const set = new Set(['ar', 'en', 'es', 'id', 'th', 'tw'])
 
 const locales = fs
-  .readdirSync(Path.resolve(remoteBasepath), { withFileTypes: true })
+  .readdirSync('../course_web/rtl/www/common/nls', { withFileTypes: true })
   .filter((it) => it.isDirectory())
-  .filter((it) => it.name !== 'templates')
-  .map((it) => it.name)
-  .map((it) => {
-    return it === 'zh-TW' ? 'tw' : it;
-  });
+  .map((it) => it.name).filter(it => set.has(it));
 
 module.exports = {
   project: 'course_web:nls',
   type: requirejs,
-  localGlob: '../course_web/i18n/www/common/nls/**/*.js',
+  localGlob: '../course_web/rtl/www/common/nls/**/*.js',
   remoteGlob: '**/2.0_*.js.json',
   fileMap: ['{locale}/{filename}', '{locale}/2.0_{filename}.json'],
   desc: ['{filename}', '2.0 {filename}'],
@@ -34,20 +31,16 @@ module.exports = {
       return obj;
     }
   },
-  remoteDeserialAfter: function (file, obj, src, hasLocalPath) {
+  remoteDeserialAfter: function (file, obj) {
     const seps = file.path.split(Path.sep);
     if (seps[seps.length - 2] === 'templates') {
-      if (hasLocalPath) {
-        obj = Object.assign({}, src, { root: obj });
-      } else {
-        obj = {
-          root: obj,
-          ...locales.reduce((accu, curr) => {
-            accu[curr] = true;
-            return accu;
-          }, {})
-        };
-      }
+      obj = {
+        root: obj,
+        ...locales.reduce((accu, curr) => {
+          accu[curr] = true;
+          return accu;
+        }, {})
+      };
     }
     return obj;
   }
