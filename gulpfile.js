@@ -30,7 +30,7 @@ const local2Remote = (config) => {
 };
 
 // 平台数据转换为本地代码
-const remote2Local = (config, withMerge) => {
+const remote2Local = (config, localFiles, withMerge) => {
   let stream = src(config.remoteGlob)
   // 不同步更新远程的中文文本
   if (onlyTemplate) {
@@ -40,7 +40,7 @@ const remote2Local = (config, withMerge) => {
   }
   return stream
     .pipe(count(config, config.remoteGlob))
-    .pipe(convertRemote(config, withMerge))
+    .pipe(convertRemote(config, localFiles, withMerge))
     .pipe(dest((file) => file.base));
 };
 
@@ -51,11 +51,12 @@ const l2r = parallel([
   ...l2rTasks.map((task) => () => task(onlyTemplate))
 ]);
 
+const localFiles = {}
 const r2l = parallel([
   ...configs.map((config) => {
-    const arr = [() => remote2Local(config, withMerge)];
+    const arr = [() => remote2Local(config, localFiles, withMerge)];
     if (withMerge && config.needMerge) {
-      arr.push(() => mergeLocales(config));
+      arr.push(() => mergeLocales(config, localFiles));
     }
     if (config.otherDest) {
       arr.push(

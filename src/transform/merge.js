@@ -18,7 +18,7 @@ const merge = (locale, defaultLocale, callback) => {
   );
 };
 
-const mergeLocales = async (config) => {
+const mergeLocales = async (config, localFiles) => {
   const { localGlob, type, localRegex, localLocaleMap, mergeCallback = () => {} } = config;
   let files = await getGlobFiles(localGlob);
   const map = {};
@@ -53,10 +53,10 @@ const mergeLocales = async (config) => {
           const text = await fsp.readFile(file, { encoding: 'utf-8' });
           const obj = parse(type, text);
           const newText = stringify(type, merge(obj, templateObj, mergeCallback), text, { unicode: true });
-          if (text !== newText) {
-            await fsp.writeFile(file, newText, { encoding: 'utf-8' });
+          await fsp.writeFile(file, newText, { encoding: 'utf-8' });
+          if ((localFiles[Path.resolve(file)] || text) !== newText) {
+            console.log(Path.relative('', file));
           }
-          console.log(Path.relative('', file));
         })
       );
     })

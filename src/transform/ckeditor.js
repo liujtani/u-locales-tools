@@ -156,6 +156,7 @@ const locales = ['zh-cn', 'zh', 'ar', 'en', 'es', 'id', 'th'];
 
 module.exports.r2l = async (withMerge = false) => {
   const files = await getGlobFiles(Path.posix.join(remoteBasepath, '*', 'ckeditor.json'));
+  const localFiles = {}
   await Promise.all(
     files.map(async (file) => {
       const obj = JSON.parse(await fsp.readFile(file, { encoding: 'utf-8' }));
@@ -191,6 +192,7 @@ module.exports.r2l = async (withMerge = false) => {
                 const obj = parse(ckeditor, text);
                 id = obj.id;
                 localeId = obj.locale;
+                localFiles[Path.resolve(file)] = text
               }
               const newText = stringify(ckeditor, { id, locale: localeId, message: value });
               if (newText !== text) {
@@ -222,8 +224,8 @@ module.exports.r2l = async (withMerge = false) => {
                   const text = await fsp.readFile(file, { encoding: 'utf-8' });
                   const obj = parse(ckeditor, text);
                   const newText = stringify(ckeditor, { id: obj.id, locale: obj.locale, message: merge(obj.message, templateObj.message) });
-                  if (text !== newText) {
-                    await fsp.writeFile(file, newText, { encoding: 'utf-8' });
+                  await fsp.writeFile(file, newText, { encoding: 'utf-8' });
+                  if ((localFiles[Path.resolve(file)] || text) !== newText) {
                     console.log(Path.relative('', file));
                   }
                 }

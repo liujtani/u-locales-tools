@@ -7,7 +7,7 @@ const { stringify } = require('../utils/stringify');
 const { deserial } = require('../utils/serial');
 const merge = require('lodash/merge');
 
-const convertRemote = function (config, withMerge) {
+const convertRemote = function (config, localFiles, withMerge) {
   return through.obj(function (file, __, callback) {
     file.isRemote = true;
     if (file.isNull()) {
@@ -24,6 +24,7 @@ const convertRemote = function (config, withMerge) {
       if (fs.existsSync(localPath)) {
         hasLocalPath = true;
         text = fs.readFileSync(localPath, { encoding: 'utf-8' });
+        localFiles[Path.resolve(localPath)] = text
       } else {
         text = fs.readFileSync(config.getTemplatePath(file.path), { encoding: 'utf-8' });
       }
