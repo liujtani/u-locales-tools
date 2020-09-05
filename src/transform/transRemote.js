@@ -20,16 +20,15 @@ const convertRemote = function (config, localFiles, withMerge) {
       const contents = file.contents.toString();
       const localPath = config.getLocalPath(file.path);
       let text;
-      let hasLocalPath = false;
+      let src;
+      const defaultText = fs.readFileSync(config.getTemplatePath(file.path), { encoding: 'utf-8' })
+      const defaultSrc = parse(config.type, defaultText)
       if (fs.existsSync(localPath)) {
-        hasLocalPath = true;
         text = fs.readFileSync(localPath, { encoding: 'utf-8' });
         localFiles[Path.resolve(localPath)] = text
-      } else {
-        text = fs.readFileSync(config.getTemplatePath(file.path), { encoding: 'utf-8' });
+        src = parse(config.type, text)
       }
       let str;
-      const src = parse(config.type, text);
       try {
         let obj;
         if (config.type === properties) {
@@ -44,20 +43,20 @@ const convertRemote = function (config, localFiles, withMerge) {
           });
         }
         if (config.remoteParseAfter) {
-          obj = config.remoteParseAfter(file, obj, src, hasLocalPath, config);
+          obj = config.remoteParseAfter(file, obj, src, defaultSrc, config);
         }
         if (config.type !== properties) {
-          obj = deserial(obj, src);
+          obj = deserial(obj, config.mergeLocal ? defaultSrc : undefined);
         }
         if (config.remoteDeserialAfter) {
-          obj = config.remoteDeserialAfter(file, obj, src, hasLocalPath, config);
+          obj = config.remoteDeserialAfter(file, obj, src, defaultSrc, config);
         }
         if (config.mergeLocal) {
           obj = merge(merge(obj, src), obj);
         }
         str = stringify(config.type, obj, contents, { unicode: true });
         file.contents = Buffer.from(str);
-        if (!withMerge && (!hasLocalPath || text !== str)) {
+        if (!withMerge && (text === undefined || text !== str)) {
           console.log(Path.relative('', localPath));
         }
         file.path = Path.resolve(localPath);
