@@ -1,4 +1,4 @@
-const { src, dest, parallel, series } = require('gulp');
+const { src, dest, series } = require('gulp');
 const filter = require('gulp-filter');
 const { configs, l2rTasks, r2lTasks } = require('./src/tasks');
 const convertLocal = require('./src/transform/transLocal');
@@ -44,7 +44,7 @@ const remote2Local = (config, localFiles, withMerge) => {
     .pipe(dest((file) => file.base));
 };
 
-const l2r = parallel([
+const l2r = series([
   ...configs.map((config) => {
     return () => local2Remote(config);
   }),
@@ -52,7 +52,7 @@ const l2r = parallel([
 ]);
 
 const localFiles = {}
-const r2l = parallel([
+const r2l = series([
   ...configs.map((config) => {
     const arr = [() => remote2Local(config, localFiles, withMerge)];
     if (withMerge && config.needMerge) {
@@ -61,7 +61,7 @@ const r2l = parallel([
     if (config.otherDest) {
       arr.push(
         Array.isArray(config.otherDest)
-          ? parallel(
+          ? series(
               config.otherDest.map((d) => {
                 return src(config.localGlob).pipe(dest(d));
               })
