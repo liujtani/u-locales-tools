@@ -1,16 +1,17 @@
-const { json } = require('../utils/types');
 const Path = require('path');
 const merge = require('lodash/merge');
 const fs = require('fs');
+const { getPath } = require('../../utils/rc');
 
+const localGlob = getPath('umooc-static', 'js/tutor/question/Que/formula/locales/*.json');
+const otherDest = getPath('homework', 'ulearning/static/3rdlib/ckeditor/plugins/attachMathJax/locales');
 module.exports = {
-  project: 'attachMathJax', // 项目名称
-  type: json,
+  project: 'umooc-view:umooc-homework:mathJax',
   remoteFilename: 'attachMathJax.json',
-  localGlob: '../umooc/static/js/tutor/question/Que/formula/locales/*.json', // 本地文件glob
+  localGlob, // 本地文件glob
   fileMap: ['{locale}.json'],
   desc: '对应公式编辑器页面', // 上游文件字段的description，支持fileMap的写法
-  otherDest: '../umooc_homework_front/i18n/ulearning/static/3rdlib/ckeditor/plugins/attachMathJax/locales', // 将生成的本地文件是否复制到其他地方
+  otherDest, // 将生成的本地文件是否复制到其他地方
   localParseAfter: (file, obj) => {
     obj = Object.assign({}, obj);
     const seps = file.path.split(Path.sep);

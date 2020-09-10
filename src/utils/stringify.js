@@ -1,4 +1,4 @@
-const { json, seajs, requirejs, properties, kindeditor, js, ckeditor } = require('./types');
+const { json, seajs, requirejs, properties, kindeditor, js, ckeditor, datepicker } = require('./types');
 const { stringify } = require('./properties');
 const { format } = require('./format');
 
@@ -13,6 +13,8 @@ exports.stringify = (type, obj, contents, options) => {
       return format(str);
     case js:
       return format('(' + JSON.stringify(obj) + ')');
+    case datepicker:
+      return format('var $lang = ' + JSON.stringify(obj))
     case properties:
       return stringify(obj, contents, options);
     case ckeditor:

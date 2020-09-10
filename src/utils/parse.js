@@ -1,4 +1,4 @@
-const { json, seajs, requirejs, properties, kindeditor, js, ckeditor } = require('./types');
+const { json, seajs, requirejs, properties, kindeditor, js, ckeditor, datepicker } = require('./types');
 const { parse } = require('./properties');
 
 global.define = (dep, def) => {
@@ -35,6 +35,10 @@ exports.parse = (type, contents) => {
     case ckeditor:
       obj = eval(contents);
       break;
+    case datepicker:
+      eval(contents)
+      // eslint-disable-next-line
+      return $lang;
     case js:
       obj = eval('(' + contents + ')');
       break;

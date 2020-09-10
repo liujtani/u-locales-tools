@@ -1,6 +1,6 @@
 const { src, dest, series } = require('gulp');
 const filter = require('gulp-filter');
-const { configs, l2rTasks, r2lTasks } = require('./src/tasks');
+const { configs, l2rTasks, r2lTasks } = require('./src/tasks/tasks');
 const convertLocal = require('./src/transform/transLocal');
 const convertRemote = require('./src/transform/transRemote');
 const { mergeLocales } = require('./src/transform/merge');

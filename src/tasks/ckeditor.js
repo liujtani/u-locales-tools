@@ -9,15 +9,20 @@ const { parse } = require('../utils/parse');
 const { stringify } = require('../utils/stringify');
 const { ckeditor, json } = require('../utils/types');
 const { serial, deserial } = require('../utils/serial');
-const { merge } = require('./merge');
+const { merge } = require('../transform/merge');
+const { getPath } = require('../utils/rc');
 
-const courseWebPath = '../course_web/i18n/www/common/vendor/ckeditor/plugins';
-const homeworkPath = '../umooc_homework_front/i18n/ulearning/static/3rdlib/ckeditor/plugins';
+const courseWebPath = getPath('course_web', 'www/common/vendor/ckeditor/plugins');
+const homeworkPath = getPath('homework', 'ulearning/static/3rdlib/ckeditor/plugins');
+const uaPath = getPath('ua-web', 'src/common/lib/ckeditor/plugins')
 
 const plugins = {
   attachMathJax: [homeworkPath],
   imageUploader: [courseWebPath, homeworkPath],
-  simplelink: [courseWebPath, homeworkPath]
+  simplelink: [courseWebPath, homeworkPath, uaPath],
+  kityformula: [uaPath],
+  addNotes: [uaPath],
+  embedHtml: [uaPath]
 };
 
 const localeMap = {
@@ -123,9 +128,6 @@ module.exports.l2r = async (onlyTemplate = false) => {
           });
           await Promise.all(
             paths.map(async (path) => {
-              if (!fs.existsSync(Path.dirname(path))) {
-                await fsp.mkdir(Path.dirname(path));
-              }
               await fsp.writeFile(path, stringify(ckeditor, data), { encoding: 'utf-8' });
             })
           );
@@ -151,6 +153,8 @@ module.exports.l2r = async (onlyTemplate = false) => {
     })
   );
 };
+
+module.exports.l2r.project = 'ckeditor'
 
 const locales = ['zh-cn', 'zh', 'ar', 'en', 'es', 'id', 'th'];
 
@@ -245,3 +249,6 @@ module.exports.r2l = async (withMerge = false) => {
     );
   }
 };
+
+module.exports.r2l.project = 'ckeditor'
+module.exports.project = 'ckeditor'

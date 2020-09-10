@@ -2,10 +2,11 @@ const Path = require('path');
 const escapeRegExp = require('lodash/escapeRegExp');
 const isNil = require('lodash/isNil');
 const { getGlobsBase } = require('../utils/extra');
+const { rc } = require('../utils/rc');
 
 const templates = 'templates';
 
-const remoteBasepath = '../ulearning-asia/locales';
+const remoteBasepath = Path.posix.join(rc.remoteRepo, 'locales');
 
 class Config {
   constructor(option) {

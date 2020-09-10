@@ -1,10 +1,10 @@
-const { json } = require('../utils/types');
+
+const { getPath } = require('../utils/rc')
 
 module.exports = {
-  project: 'app_1.0',
-  type: json,
+  project: 'activity1',
   remoteFilename: '小组作业ch.json',
-  localGlob: '../ulearning_mobile_1.0/1.0/src/assets/language/*.json',
+  localGlob: getPath('activity1', '1.0/src/assets/language/*.json'),
   fileMap: ['{locale}.json'],
   localeMap: {
     templates: 'ch'

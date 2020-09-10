@@ -1,4 +1,4 @@
-const option = require('../loaders/view-properties');
+const option = require('../loaders/umooc-view');
 
 const { Config } = require('../config/index');
 const { getGlobFiles } = require('../utils/getGlobFiles');
@@ -6,7 +6,7 @@ const { parse } = require('../utils/properties');
 const fs = require('fs');
 const fsp = fs.promises;
 
-const config = new Config(option);
+const config = new Config(option[0]);
 
 module.exports.checkProperties = async () => {
   const map = new Map();

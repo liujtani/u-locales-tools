@@ -6,6 +6,7 @@ const { parse } = require('../utils/parse');
 const { stringify } = require('../utils/stringify');
 const { deserial } = require('../utils/serial');
 const merge = require('lodash/merge');
+const last = require('lodash/last');
 
 const convertRemote = function (config, localFiles, withMerge) {
   return through.obj(function (file, __, callback) {
@@ -19,20 +20,21 @@ const convertRemote = function (config, localFiles, withMerge) {
     } else if (file.isBuffer()) {
       const contents = file.contents.toString();
       const localPath = config.getLocalPath(file.path);
-      let text;
-      let src;
-      const defaultText = fs.readFileSync(config.getTemplatePath(file.path), { encoding: 'utf-8' })
-      const defaultSrc = parse(config.type, defaultText)
-      if (fs.existsSync(localPath)) {
-        text = fs.readFileSync(localPath, { encoding: 'utf-8' });
-        localFiles[Path.resolve(localPath)] = text
-        src = parse(config.type, text)
-      }
-      let str;
+      const type = config.type || (last(Path.extname(file).split('.')) || '').toLowerCase()
       try {
+        let text;
+        let src;
+        const defaultText = fs.readFileSync(config.getTemplatePath(file.path), { encoding: 'utf-8' })
+        const defaultSrc = parse(type, defaultText)
+        if (fs.existsSync(localPath)) {
+          text = fs.readFileSync(localPath, { encoding: 'utf-8' });
+          localFiles[Path.resolve(localPath)] = text
+          src = parse(type, text)
+        }
+        let str;
         let obj;
-        if (config.type === properties) {
-          obj = parse(config.type, contents);
+        if (type === properties) {
+          obj = parse(type, contents);
         } else {
           obj = JSON.parse(contents);
           Object.keys(obj).forEach((key) => {
@@ -45,7 +47,7 @@ const convertRemote = function (config, localFiles, withMerge) {
         if (config.remoteParseAfter) {
           obj = config.remoteParseAfter(file, obj, src, defaultSrc, config);
         }
-        if (config.type !== properties) {
+        if (type !== properties) {
           obj = deserial(obj, config.mergeLocal ? defaultSrc : undefined);
         }
         if (config.remoteDeserialAfter) {
@@ -54,7 +56,7 @@ const convertRemote = function (config, localFiles, withMerge) {
         if (config.mergeLocal) {
           obj = merge(merge(obj, src), obj);
         }
-        str = stringify(config.type, obj, contents, { unicode: true });
+        str = stringify(type, obj, contents, { unicode: true });
         file.contents = Buffer.from(str);
         if (!withMerge && (text === undefined || text !== str)) {
           console.log(Path.relative('', localPath));

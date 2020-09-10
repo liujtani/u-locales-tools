@@ -1,10 +1,9 @@
-const { properties } = require('../utils/types');
+const { getPath } = require('../utils/rc');
 
 module.exports = {
-  project: 'properties',
-  type: properties,
+  project: 'umooc-web',
   remoteFilename: 'message_zh_CN.properties',
-  localGlob: '../umooc-web/test/src/main/resource/resources/message_*.properties',
+  localGlob: getPath('umooc-web', 'src/main/resource/resources/message_*.properties'),
   fileMap: ['message_{locale}.properties'],
   desc: 'java properties项目',
   localeMap: {

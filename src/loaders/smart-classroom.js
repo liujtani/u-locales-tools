@@ -1,8 +1,7 @@
-const { json } = require('../utils/types');
+// todo
 
 module.exports = {
   project: 'smart-classroom',
-  type: json,
   remoteFilename: 'smart-classroom.json',
   localGlob: '../ulearning-travial/travial/*.json',
   fileMap: ['{locale}.json'],
