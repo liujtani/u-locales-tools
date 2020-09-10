@@ -8,6 +8,7 @@ const minimist = require('minimist');
 const { count } = require('./src/utils/count');
 const { checkRemoteKey } = require('./src/check/check-remote-key');
 const { checkProperties } = require('./src/check/check-properties-key-in-js');
+const { checkInterpolation } = require('./src/check/check-interpolation');
 
 const argv = minimist(process.argv.slice(3));
 const withMerge = argv.m || argv.merge;
@@ -79,3 +80,4 @@ exports.r2l = r2l;
 
 exports['check-remote-key'] = checkRemoteKey;
 exports['check-properties'] = checkProperties
+exports['check-polation'] = checkInterpolation
