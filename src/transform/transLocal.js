@@ -18,7 +18,7 @@ module.exports = function (config) {
       this.emit('error', new Error('Streams not supported!'));
     } else if (file.isBuffer()) {
       const contents = file.contents.toString();
-      const type = config.type || (last(Path.extname(file).split('.')) || '').toLowerCase()
+      const type = config.type || (last(Path.extname(file.path).split('.')) || '').toLowerCase()
       try {
         let obj;
         let str;

@@ -20,7 +20,7 @@ const convertRemote = function (config, localFiles, withMerge) {
     } else if (file.isBuffer()) {
       const contents = file.contents.toString();
       const localPath = config.getLocalPath(file.path);
-      const type = config.type || (last(Path.extname(file).split('.')) || '').toLowerCase()
+      const type = config.type || (last(Path.extname(file.path).split('.')) || '').toLowerCase()
       try {
         let text;
         let src;
