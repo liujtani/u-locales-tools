@@ -4,6 +4,7 @@ const cloneDeep = require('lodash/cloneDeep');
 const omitBy = require('lodash/omitBy');
 const forEach = require('lodash/forEach');
 const omit = require('lodash/omit');
+const last = require('lodash/last')
 const fs = require('fs');
 const { getGlobFiles } = require('../utils/getGlobFiles');
 const { parse } = require('../utils/parse');
@@ -19,7 +20,7 @@ const merge = (locale, defaultLocale, callback) => {
 };
 
 const mergeLocales = async (config, localFiles) => {
-  const { localGlob, type, localRegex, localLocaleMap, mergeCallback = () => {} } = config;
+  const { localGlob, localRegex, localLocaleMap, mergeCallback = () => {} } = config;
   let files = await getGlobFiles(localGlob);
   const map = {};
 
@@ -46,10 +47,12 @@ const mergeLocales = async (config, localFiles) => {
       const locales = map[key];
       const templateFile = locales[template];
       const templateStr = await fsp.readFile(templateFile, { encoding: 'utf-8' });
+      const type = config.type || (last(Path.extname(templateFile).split('.')) || '').toLowerCase()
       const templateObj = parse(type, templateStr);
       await Promise.all(
         Object.keys(omit(locales, [template])).map(async (locale) => {
           const file = locales[locale];
+          const type = config.type || (last(Path.extname(file).split('.')) || '').toLowerCase()
           const text = await fsp.readFile(file, { encoding: 'utf-8' });
           const obj = parse(type, text);
           const newText = stringify(type, merge(obj, templateObj, mergeCallback), text, { unicode: true });
