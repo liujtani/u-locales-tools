@@ -10,12 +10,16 @@ module.exports = [
     desc: ['{filename}.json', '1.0 {filename}.js']
   },
   {
-    project: 'kindeditor',
+    project: 'umooc-static:kindeditor',
     type: kindeditor,
     remoteFilename: 'kindeditor.json',
-    localGlob: getPath('umooc-static', 'kindeditor_4.1.4/lang/*.json'),
-    fileMap: ['{locale}.json'],
+    localGlob: getPath('umooc-static', 'kindeditor_4.1.4/lang/*.js'),
+    fileMap: ['{locale}.js'],
     desc: 'kindeditor 编辑器组件',
+    localeMap: {
+      templates: 'zh_CN',
+      'zh-TW': 'zh_TW'
+    },
     mergeLocal: true,
     localParseAfter: function (file, obj) {
       obj['fontname.fontName'] = undefined;
@@ -28,7 +32,7 @@ module.exports = [
     }
   },
   {
-    project: 'my97DatePicker',
+    project: 'umooc-static:my97DatePicker',
     type: datepicker,
     remoteFilename: 'my97DatePicker.json',
     localGlob: getPath('umooc-static', 'js/My97DatePicker/lang/*.js'),
