@@ -55,7 +55,7 @@ const mergeLocales = async (config, localFiles) => {
           const type = config.type || (last(Path.extname(file).split('.')) || '').toLowerCase()
           const text = await fsp.readFile(file, { encoding: 'utf-8' });
           const obj = parse(type, text);
-          const newText = stringify(type, merge(obj, templateObj, mergeCallback), text, { unicode: true });
+          const newText = stringify(type, merge(obj, templateObj, mergeCallback), text, { unicode: true, filepath: file });
           await fsp.writeFile(file, newText, { encoding: 'utf-8' });
           if ((localFiles[Path.resolve(file)] || text) !== newText) {
             console.log(Path.relative('', file));

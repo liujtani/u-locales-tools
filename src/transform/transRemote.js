@@ -56,7 +56,7 @@ const convertRemote = function (config, localFiles, withMerge) {
         if (config.mergeLocal) {
           obj = merge(merge(obj, src), obj);
         }
-        str = stringify(type, obj, contents, { unicode: true });
+        str = stringify(type, obj, contents, { unicode: true, filepath: localPath });
         file.contents = Buffer.from(str);
         if (!withMerge && (text === undefined || text !== str)) {
           console.log(Path.relative('', localPath));
