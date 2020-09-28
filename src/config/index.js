@@ -13,6 +13,7 @@ class Config {
     const remoteFilename = option.remoteFilename || option.project;
     this.project = option.project;
     this.type = option.type;
+    this.doubleBackSlash = option.doubleBackSlash; // properties 文件才需要这个属性
     this.localGlob = option.localGlob;
     this.remoteGlob = option.remoteGlob || '**/' + remoteFilename;
     this.remoteGlob = Array.isArray(this.remoteGlob) ? this.remoteGlob.map((glob) => Path.posix.join(remoteBasepath, glob)) : Path.posix.join(remoteBasepath, this.remoteGlob);

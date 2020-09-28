@@ -2,7 +2,10 @@ const { parse, stringify } = require("properties");
 const cloneDeep = require('lodash/cloneDeep')
 const forEach = require('lodash/forEach')
 
-exports.parse = (text) => {
+exports.parse = (text, doubleBackSlash = false) => {
+  if (doubleBackSlash) {
+    text = text.replace(/\\\\u/g, '\\u')
+  }
   return parse(text, {
     path: false,
     namespaces: false,
@@ -28,7 +31,7 @@ const unicode2Ascii = (str) => {
   return convert(str, (code, s) => (code > 127 ? `\\u${code.toString(16).padStart(4, "0")}` : s));
 };
 
-exports.stringify = (obj, text, { unicode = false } = {}) => {
+exports.stringify = (obj, text, { unicode = false, doubleBackSlash = false } = {}) => {
   const mode = text.includes("\r\n") ? "\r\n" : "\n";
   const lines = text.split(/\r\n|\n/);
   const map = new Map();
@@ -72,5 +75,6 @@ exports.stringify = (obj, text, { unicode = false } = {}) => {
       result.push(...map.get(key));
     }
   }
-  return result.join(mode).replace(/\\\\u/g, "\\u");
+  const resultText = result.join(mode)
+  return !doubleBackSlash ? resultText.replace(/\\\\u/g, '\\u') : resultText
 };
