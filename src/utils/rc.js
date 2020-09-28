@@ -36,6 +36,7 @@ if (config.tasks.include !== 'all' && !Array.isArray(config.tasks.include)) {
 
 if (!Array.isArray(config.tasks.exclude)) {
   console.error('排除列表应该是一个数组');
+  process.exit(1);
 }
 
 module.exports.rc = config;
