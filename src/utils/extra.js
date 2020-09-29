@@ -42,6 +42,11 @@ const getGlobsBase = (globs) => {
   return Array.isArray(globs) ? getCommonPath([...new Set(globs.map((glob) => getGlobBase(glob)))]) : getGlobBase(globs);
 };
 
+const containsChinese = (str) => {
+  return /[\u4e00-\u9fa5]/.test(str)
+}
+
 module.exports.getCommonPath = getCommonPath;
 module.exports.getGlobBase = getGlobBase;
 module.exports.getGlobsBase = getGlobsBase;
+module.exports.containsChinese = containsChinese

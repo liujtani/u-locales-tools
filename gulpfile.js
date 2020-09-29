@@ -9,6 +9,7 @@ const { count } = require('./src/utils/count');
 const { checkRemoteKey } = require('./src/check/check-remote-key');
 const { checkProperties } = require('./src/check/check-properties-key-in-js');
 const { checkInterpolation } = require('./src/check/check-interpolation');
+const { checkChinese } = require('./src/check/check-chinese');
 
 const argv = minimist(process.argv.slice(3));
 const withMerge = argv.m || argv.merge;
@@ -20,7 +21,7 @@ const local2Remote = (config) => {
   if (onlyTemplate) {
     stream = stream.pipe(
       filter((file) => {
-        return config.isLocalTemplate(file.path);
+        return config.getLocaleByLocal(file.path) === 'templates';
       })
     );
   }
@@ -36,7 +37,7 @@ const remote2Local = (config, localFiles, withMerge) => {
   // 不同步更新远程的中文文本
   if (onlyTemplate) {
     stream = stream.pipe(filter(file => {
-      return !config.isRemoteTemplate(file.path)
+      return config.getLocaleByRemote(file.path) !== 'templates'
     }))
   }
   return stream

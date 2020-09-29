@@ -1,16 +1,17 @@
 const Path = require('path');
 const through = require('through2');
-const forEach = require('lodash/forEach');
 const last = require('lodash/last')
 const fs = require('fs');
 const { properties } = require('../utils/types');
 const { stringify } = require('../utils/properties');
 const { parse } = require('../utils/parse');
 const { serial } = require('../utils/serial');
+const { transToRemoteFormat } = require('./remoteFormat');
 
 module.exports = function (config) {
   return through.obj(function (file, _, callback) {
     const remotePath = config.getRemotePath(file.path);
+    const locale = config.getLocaleByRemote(remotePath)
     if (file.isNull()) {
       return callback(null, file);
     }
@@ -42,15 +43,7 @@ module.exports = function (config) {
         if (type === properties) {
           str = stringify(obj, contents, { unicode: false });
         } else {
-          forEach(obj, function (value, key) {
-            if (value !== undefined) {
-              obj[key] = {
-                message: value,
-                description: remoteObj && remoteObj[key] && remoteObj[key].description ? remoteObj[key].description : config.getDesc(file.path)
-              };
-            }
-          });
-          str = JSON.stringify(obj, null, 2) + '\n';
+          str = JSON.stringify(transToRemoteFormat({ src: obj, ref: remoteObj, locale, config, path: file.path }), null, 2) + '\n';
         }
         file.contents = Buffer.from(str);
         if (remoteText !== str) {

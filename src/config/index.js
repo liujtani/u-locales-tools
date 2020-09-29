@@ -124,19 +124,15 @@ class Config {
     return this.getLocaleFilePath(path, templates);
   }
 
-  isLocalTemplate(path) {
+  getLocaleByLocal (path) {
     const p = path.replace(/\\/g, '/');
     const result = this.localRegex.exec(p);
-    if (result && result.groups.locale) {
-      return this.localLocaleMap[result.groups.locale] === templates;
-    } else {
-      return false;
-    }
+    return this.localLocaleMap[result.groups.locale]
   }
 
-  isRemoteTemplate(path) {
+  getLocaleByRemote (path) {
     const seps = path.split(Path.sep);
-    return seps[seps.length - 2] === templates
+    return seps[seps.length - 2]
   }
 }
 

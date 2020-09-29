@@ -38,10 +38,20 @@ const convertRemote = function (config, localFiles, withMerge) {
         } else {
           obj = JSON.parse(contents);
           Object.keys(obj).forEach((key) => {
-            if (obj[key].message === undefined || obj[key].description === undefined) {
-              throw new Error('缺少必要的key：' + key);
+            // 远程翻译文件的值，好像也不能是number，这里暂且这样处理
+            if (typeof obj[key].message !== 'string' && typeof obj[key].message !== 'number') {
+              console.warn(`warn: ${file.path} 的 ${key} 字段的 message 属性的值不是字符串或数字`)
+              return
             }
-            obj[key] = obj[key].message;
+            if (typeof obj[key].description !== 'string' && typeof obj[key].description !== 'number') {
+              console.warn(`warn: ${file.path} 的 ${key} 字段的 description 属性的值不是字符串或数字`)
+            }
+            // 假如现在需要重构一个插值，那么整个文本是需要重新翻译的，可以在老师翻译完毕之前，将旧的值放在oldValue字段上。如果直接同步message的值，可能会导致丢失插值。删除翻译，回退到中文，又会导致页面出现中文。
+            if (obj[key].useOldValue && (typeof obj[key].oldValue === 'string' || typeof obj[key].oldValue === 'number')) {
+              obj[key] = obj[key].oldValue
+            } else {
+              obj[key] = obj[key].message;
+            }
           });
         }
         if (config.remoteParseAfter) {
