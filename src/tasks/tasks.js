@@ -8,6 +8,7 @@ const uaWeb = require('../loaders/ua-web'); // ua-web
 const umoocView = require('../loaders/umooc-view'); // umooc-view
 const umoocStatic = require('../loaders/umooc-static'); // umooc-static
 const umoocWeb = require('../loaders/umooc-web'); // umooc-web
+const smartClassroom = require('../loaders/smart-classroom'); // smart-classroom
 
 // mobile
 const activity1 = require('../loaders/activity-1.0');
@@ -28,7 +29,7 @@ const ckeditor = require('./ckeditor');
 let tasks = {
   [ckeditor.project]: ckeditor
 };
-let loaders = flatten([courseWeb, uaWeb, umoocStatic, umoocView, umoocWeb, activity1, activity2, discussion, exam, umoocMobile, homework, attachMathJax]);
+let loaders = flatten([courseWeb, uaWeb, umoocStatic, umoocView, umoocWeb, smartClassroom, activity1, activity2, discussion, exam, umoocMobile, homework, attachMathJax]);
 const projectSet = new Set(loaders.map((it) => it.project).concat([ckeditor.project]));
 const outputInvalidTasks = (set, log) => {
   const invalid = [];
