@@ -82,3 +82,4 @@ exports.r2l = r2l;
 exports['check-remote-key'] = checkRemoteKey;
 exports['check-properties'] = checkProperties
 exports['check-polation'] = checkInterpolation
+exports['check-chinese'] = checkChinese
