@@ -1,3 +1,4 @@
+const Path = require('path')
 const option = require('../loaders/umooc-view');
 
 const { Config } = require('../config/index');
@@ -8,7 +9,7 @@ const fsp = fs.promises;
 
 const config = new Config(option[0]);
 
-module.exports.checkProperties = async () => {
+module.exports.checkProperties = async (output) => {
   const map = new Map();
   const files = await getGlobFiles(config.localGlob);
   await Promise.all(
@@ -85,8 +86,5 @@ module.exports.checkProperties = async () => {
   Object.keys(result).forEach((key) => {
     result[key] = [...result[key]];
   });
-  try {
-    await fsp.mkdir('./.log')
-  } catch (e) {}
-  await fsp.writeFile('./.log/properties.json', JSON.stringify(result, null, 2));
+  await fsp.writeFile(Path.join(output, 'properties.json'), JSON.stringify(result, null, 2));
 };

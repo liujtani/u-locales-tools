@@ -1,13 +1,10 @@
 const omit = require('lodash/omit');
 const { getRemoteData } = require('../utils/remote');
+const Path = require('path')
 const fs = require('fs')
 const fsp = fs.promises
 
-if (!fs.existsSync('./.log/')) {
-  fs.mkdirSync('././log');
-}
-
-module.exports.checkChinese = async () => {
+module.exports.checkChinese = async (output) => {
   const map = await getRemoteData(false)
   const obj = {}
   await Promise.all(Object.keys(omit(map, ['templates', 'zh-TW'])).map(async (locale) => {
@@ -26,8 +23,5 @@ module.exports.checkChinese = async () => {
      }
    }))
   }));
-  try {
-    await fsp.mkdir('.log')
-  } catch (e) {}
-  await fsp.writeFile('.log/hasChinese.json', JSON.stringify(obj, null, 2) + '\n')
+  await fsp.writeFile(Path.join(output, 'hasChinese.json'), JSON.stringify(obj, null, 2) + '\n')
 };

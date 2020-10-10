@@ -127,7 +127,7 @@ class Config {
   getLocaleByLocal (path) {
     const p = path.replace(/\\/g, '/');
     const result = this.localRegex.exec(p);
-    return this.localLocaleMap[result.groups.locale]
+    return this.localLocaleMap[result.groups.locale] || result.groups.locale
   }
 
   getLocaleByRemote (path) {

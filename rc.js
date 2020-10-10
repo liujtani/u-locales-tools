@@ -1,6 +1,6 @@
 module.exports = {
   remoteRepo: '../ulearning-asia',
-  defaultBranch: 'rtl', // 默认分支，默认为空字符串
+  defaultBranch: 'bugfix', // 默认分支，默认为空字符串
   logPath: '.log', // log目录
   projects: {
     course_web: {
@@ -11,12 +11,10 @@ module.exports = {
       branch: ''
     },
     activity2: {
-      path: '../ulearning_mobile_2.0',
-      branch: 'i18n'
+      path: '../ulearning_mobile_2.0'
     },
     homework: {
-      path: '../umooc_homework_front',
-      branch: 'bugfix'
+      path: '../umooc_homework_front'
     },
     discussion: {
       path: '../discussion',
@@ -26,8 +24,7 @@ module.exports = {
       path: '../exam'
     },
     ['ua-web']: {
-      path: '../ua_web',
-      branch: 'rtl'
+      path: '../ua_web'
     },
     ['umooc-static']: {
       path: '../umooc-static'
@@ -37,15 +34,15 @@ module.exports = {
     },
     ['umooc-mobile']: {
       path: '../umooc-mobile',
-      branch: 'test'
+      // branch: 'test'
     },
     ['umooc-web']: {
       path: '../umooc-web',
-      branch: 'test'
+      // branch: 'test'
     }
   },
   tasks: {
-    include: ['ckeditor'],
+    include: ['course_web'],
     // include: ['exam', 'course_web', 'ua-web', 'umooc-static', 'umooc-view', 'homework'],
     // include: 'all',
     exclude: []

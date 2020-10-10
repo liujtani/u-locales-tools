@@ -1,3 +1,4 @@
+const Path = require('path')
 const fs = require('fs');
 const fsp = fs.promises;
 const isObjectLike = require('lodash/isObjectLike')
@@ -34,10 +35,6 @@ function getPolation(str) {
   return polation;
 }
 
-if (!fs.existsSync('./.log/')) {
-  fs.mkdirSync('././log');
-}
-
 const check = (obj, source, diff, compositeKey = '') => {
   if (isObjectLike(obj) && isObjectLike(source)) {
     Object.keys(obj).forEach((key) => {
@@ -55,7 +52,7 @@ const check = (obj, source, diff, compositeKey = '') => {
   }
 };
 
-module.exports.checkInterpolation = async () => {
+module.exports.checkInterpolation = async (output) => {
   const map = getRemoteData(false)
   const templates = map.templates;
   const keys = Object.keys(map);
@@ -69,12 +66,11 @@ module.exports.checkInterpolation = async () => {
       const diff = {};
       if (!templates[file]) continue;
       check(fileMap[file], templates[file], diff);
-      console.log(locale)
       if (Object.keys(diff).length > 0) {
         try {
-          await fsp.mkdir('./.log/' + locale);
+          await fsp.mkdir(Path.join(output, locale));
         } catch (e) {}
-        await fsp.writeFile('./.log/' + locale + '/' + file, JSON.stringify(diff, null, 2) + '\n');
+        await fsp.writeFile(Path.join(output, locale, file), JSON.stringify(diff, null, 2) + '\n');
       }
     }
   }

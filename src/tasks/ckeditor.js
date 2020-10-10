@@ -25,26 +25,38 @@ const plugins = {
   embedHtml: [uaPath]
 };
 
-const localeMap = {
+const r2lLocaleMap = {
   'zh-TW': 'zh',
   templates: 'zh-cn'
 };
 
-const l2rLocaleMap = Object.entries(localeMap).reduce((obj, [key, value]) => {
+const l2rLocaleMap = Object.entries(r2lLocaleMap).reduce((obj, [key, value]) => {
   obj[value] = key;
   return obj;
 }, {});
 
-const getLangPath = (name, path, onlyTemplate) => {
-  return Path.posix.join(path, name, 'lang', onlyTemplate ? 'zh-cn.js' : '*.js');
+const cliLocaleMap = {
+  zh: 'zh-cn',
+  tw: 'zh',
+  templates: 'zh-cn'
+}
+
+const getLangPath = (name, path) => {
+  return Path.posix.join(path, name, 'lang', '*.js');
 };
 
-const combine = async function (pluginName, pathArray, onlyTemplate) {
+const combine = async function (pluginName, pathArray, locales) {
   const map = {};
   await Promise.all(
     pathArray.map(async (path) => {
-      const langPath = getLangPath(pluginName, path, onlyTemplate);
-      const files = await getGlobFiles(langPath);
+      const langPath = getLangPath(pluginName, path, locales);
+      let files = await getGlobFiles(langPath);
+      if ((locales && locales.length > 0)) {
+        files = files.filter(file => {
+          const locale = file.split('.')[0]
+          return locales.includes(cliLocaleMap[locale] || locale)
+        })
+      }
       await Promise.all(
         files.map(async (file) => {
           const text = await fsp.readFile(file, { encoding: 'utf-8' });
@@ -106,11 +118,11 @@ const combine = async function (pluginName, pathArray, onlyTemplate) {
   return result;
 };
 
-module.exports.l2r = async (onlyTemplate = false) => {
+module.exports.l2r = async (locales) => {
   const composite = {};
   await Promise.all(
     Object.keys(plugins).map(async (name) => {
-      const obj = await combine(name, plugins[name], onlyTemplate);
+      const obj = await combine(name, plugins[name], locales);
       await Promise.all(
         Object.keys(obj).map(async (key) => {
           const { data, files } = obj[key];
@@ -149,6 +161,9 @@ module.exports.l2r = async (onlyTemplate = false) => {
         obj[key].message = value;
         obj[key].description = remoteObj[key] && remoteObj[key].description ? remoteObj[key].description : 'ckeditor 插件';
       });
+      if (!fs.existsSync(Path.dirname(remoteFile))) {
+        await fsp.mkdir(Path.dirname(remoteFile), { recursive: true })
+      }
       await fsp.writeFile(remoteFile, stringify(json, obj), { encoding: 'utf-8' });
     })
   );
@@ -158,15 +173,21 @@ module.exports.l2r.project = 'ckeditor'
 
 const locales = ['zh-cn', 'zh', 'ar', 'en', 'es', 'id', 'th'];
 
-module.exports.r2l = async (withMerge = false) => {
-  const files = await getGlobFiles(Path.posix.join(remoteBasepath, '*', 'ckeditor.json'));
+module.exports.r2l = async ({ withMerge = false, excludeLocales = [] } = {}) => {
+  let files = await getGlobFiles(Path.posix.join(remoteBasepath, '*', 'ckeditor.json'));
+  if (excludeLocales.length > 0 ) {
+    files = files.filter(file => {
+      const locale = file.split('.')[0]
+      return !excludeLocales.includes(cliLocaleMap[locale] || locale)
+    })
+  }
   const localFiles = {}
   await Promise.all(
     files.map(async (file) => {
       const obj = JSON.parse(await fsp.readFile(file, { encoding: 'utf-8' }));
       const seps = file.split('/');
       let locale = seps[seps.length - 2];
-      locale = localeMap[locale] || locale;
+      locale = r2lLocaleMap[locale] || locale;
       const map = {};
       forEach(obj, ({ message }, key) => {
         const paris = key.split('.');

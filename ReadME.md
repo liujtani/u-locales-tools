@@ -2,14 +2,25 @@
 ## 使用
 
 ```bash
-gulp l2r # 本地同步到远程
-gulp l2r -t # 或者 gulp l2r --template 仅同步中文
-gulp r2l # 远程同步到本地
-gulp r2l -m # 或者 gulp r2l --merge 远程同步到本地，并在本地自动合并
-gulp r2l -t # 转换时，排除中文文件，如果你在本地增加了一些中文文本，并且还不想现在就放到翻译平台上，那么可以使用这个命令不更新中文文本
-gulp r2l -m -t
-gulp check-remote-key # 检查远程仓库中，多余的key，比如，中文文件中，没有foo这个key，但是英文文件中有这个key
-gulp check-properties # 检查jsp中script元素中引用的properties中是否含有引号。因为jsp插值不会转义单引号和双引号，因此，当properties的插件插入js中后，会造成解析错误。
+node index.js -h # 显示通用选项帮助
+
+node index.js l2r -h # 显示 l2r 子命令的帮助
+node index.js l2r # 本地同步到远程
+node index.js l2r -t # 仅同步中文
+node index.js l2r -l en # 仅同步英文
+node index.js l2r -l en es # 仅同步英文和西班牙语
+
+node index.js r2l -h # 显示 r2l 子命令的帮助
+node index.js r2l # 远程同步到本地
+node index.js r2l -m # 远程同步到本地，并在本地自动合并
+node index.js r2l -u # 转换时，排除中文文件，如果你在本地增加了一些中文文本，并且还不想现在就放到翻译平台上，那么可以使用这个命令不更新中文文本
+node index.js r2l -m -u
+
+node index.js check # 检查所有项目
+node index.js check remote-key # 检查远程仓库中多余的key，比如，中文文件中，没有foo这个key，但在英文文件却存在这个key
+node index.js check properties # 检查jsp中script元素中引用的properties中是否含有引号。因为jsp插值不会转义单引号和双引号，因此，当properties的插件插入js中后，会造成解析错误。
+node index.js check polation # 检查翻译后的文本，插值是否正确
+node index.js check chinese # 检查github上游文件翻译文本中是否包含中文
 ```
 
 ## 语言配置文件结构
