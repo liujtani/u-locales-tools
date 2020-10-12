@@ -40,7 +40,7 @@ if (!Array.isArray(config.tasks.exclude)) {
 }
 
 if (!Array.isArray(config.tasks.include)) {
-  config.tasks.include = Object.keys(Object.keys(config.projects))
+  config.tasks.include = Object.keys(config.projects)
 }
 
 module.exports.rc = config;
