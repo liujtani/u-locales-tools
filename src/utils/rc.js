@@ -39,7 +39,14 @@ if (!Array.isArray(config.tasks.exclude)) {
   process.exit(1);
 }
 
+if (!Array.isArray(config.tasks.include)) {
+  config.tasks.include = Object.keys(Object.keys(config.projects))
+}
+
 module.exports.rc = config;
 module.exports.getPath = (project, path) => {
+  if (!config.projects[project]) {
+    return ''
+  }
   return Path.posix.join(config.projects[project].path, typeof config.projects[project].branch === 'string' ? config.projects[project].branch : config.defaultBranch, path);
 };

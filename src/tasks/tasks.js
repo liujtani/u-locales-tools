@@ -44,20 +44,18 @@ const outputInvalidTasks = (set, log) => {
   }
 }
 
-if (Array.isArray(rc.tasks.include) && rc.tasks.include.length > 0) {
-  const set = new Set(rc.tasks.include);
-  outputInvalidTasks(set, 'tasks.include 包含以下无效的任务名称')
-  loaders = loaders.filter((loader) => {
-    const { project } = loader;
-    return set.has(project) || project.split(':').slice(0, -1).some(p => set.has(p))
-  });
-  tasks = Object.keys(tasks).reduce((accu, name) => {
-    if (set.has(name) || name.split(':').slice(0, -1).some(n => set.has(n))) {
-      accu[name] = tasks[name];
-    }
-    return accu;
-  }, {});
-}
+const set = new Set(rc.tasks.include);
+outputInvalidTasks(set, 'tasks.include 包含以下无效的任务名称')
+loaders = loaders.filter((loader) => {
+  const { project } = loader;
+  return set.has(project) || project.split(':').slice(0, -1).some(p => set.has(p))
+});
+tasks = Object.keys(tasks).reduce((accu, name) => {
+  if (set.has(name) || name.split(':').slice(0, -1).some(n => set.has(n))) {
+    accu[name] = tasks[name];
+  }
+  return accu;
+}, {});
 
 if (Array.isArray(rc.tasks.exclude) && rc.tasks.exclude.length > 0) {
   const set = new Set(rc.tasks.exclude);
