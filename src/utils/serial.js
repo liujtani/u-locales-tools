@@ -3,7 +3,7 @@ const set = require('lodash/set');
 const every = require('lodash/every');
 
 const serial = (obj, checkDot = true) => {
-  if (!((typeof obj === 'object' && obj !== null) || Array.isArray(obj))) return obj;
+  if (!(typeof obj === 'object' && obj !== null)) return obj;
   const result = {};
 
   function travel(obj, serialKey = '') {
@@ -78,7 +78,7 @@ const get = (obj, array) => {
 };
 
 const deserial = (obj, src) => {
-  if (!((typeof obj === 'object' && obj !== null) || Array.isArray(obj))) return obj;
+  if (!(typeof obj === 'object' && obj !== null)) return obj;
   let result = {};
   if (Array.isArray(src)) {
     result = [];
