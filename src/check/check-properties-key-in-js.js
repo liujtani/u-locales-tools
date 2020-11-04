@@ -1,44 +1,49 @@
-const Path = require('path')
-const option = require('../loaders/umooc-view');
-
-const { Config } = require('../config/index');
-const { getGlobFiles } = require('../utils/getGlobFiles');
-const { parse } = require('../utils/properties');
+const Path = require('path');
+const { parse } = require('dot-properties');
 const fs = require('fs');
 const fsp = fs.promises;
+const umoocView = require('../projects/umooc-view');
+const { getTask } = require('../tasks/load-tasks');
+const { walk } = require('../utils/extra');
 
-const config = new Config(option[0]);
-
-module.exports.checkProperties = async (output) => {
-  const map = new Map();
-  const files = await getGlobFiles(config.localGlob);
+module.exports.checkProperties = async (config) => {
+  const { output } = config;
+  const task = getTask(umoocView.find((it) => it.name === 'umooc-view:prop'));
+  const files = task.getFileList(task.fullRemotePath);
+  const map = {};
   await Promise.all(
     files.map(async (file) => {
-      const match = config.localRegex.exec(file);
-      const locale = match.groups.locale;
       const obj = parse(await fsp.readFile(file, { encoding: 'utf-8' }));
-      Object.keys(obj).forEach((field) => {
-        const value = obj[field];
-        if (value && (value.includes('"') || value.includes("'"))) {
-          const item = map.get(field) || [];
-          item.push({
-            value: value,
-            locale: locale
-          });
-          map.set(field, item);
+      Object.keys(obj).forEach((key) => {
+        if (obj[key].includes("'") || obj[key].includes('"')) {
+          const item = {
+            value: obj[key],
+            path: file
+          };
+          if (map[key]) {
+            map[key].push(item);
+          } else [(map[key] = [item])];
+          if (obj[key].includes("'") && obj[key].includes('"')) {
+            item.error = '错误：单引号和双引号不可同时出现';
+          }
         }
       });
     })
   );
-  const result = {};
-  const jspFiles = await getGlobFiles('../umooc-view/i18n/src/main/webapp/**/*.jsp');
+  const list = [];
+  const jspFiles = [];
+  walk(task.basePath, (file) => {
+    if (Path.extname(file) === '.jsp') {
+      jspFiles.push(file);
+    }
+  });
   await Promise.all(
     jspFiles.map(async (file) => {
-      const contents = await fsp.readFile(file, { encoding: 'utf-8' });
+      const text = await fsp.readFile(file, { encoding: 'utf-8' });
       const scriptReg = /<script[\s\S]*?>([\s\S]*?)<\/script>/gi;
       let match = null;
       const set = new Set();
-      while ((match = scriptReg.exec(contents))) {
+      while ((match = scriptReg.exec(text))) {
         const type = /^<script([\s\S]+?type\s*?=\s*?([\S]+)[\s\S]*?)?>/.exec(match);
         if (type && type[2] && (!type[2].includes('javascript') || !type[2].includes('ecmascript'))) {
           continue;
@@ -54,37 +59,26 @@ module.exports.checkProperties = async (output) => {
           } else if (b.length > 1 && b[0] === b[b.length - 1] && b[0] === "'") {
             key = b.slice(1, -1);
           } else {
-            console.warn('warn：key错误', b);
+            console.warn('warn：key错误', b, file);
             continue;
           }
           if (set.has(key)) {
             continue;
           }
           set.add(key);
-          const values = map.get(key);
+          const values = map[key];
           if (values) {
-            const items = values.filter(({ value }) => {
-              if (value.includes('"') && value.includes("'")) {
-                console.warn('warn：单引号和双引号不可同时出现：', key, file);
-              } else if (value.includes('"') && !b.startsWith('"')) {
-                return true;
-              } else if (value.includes("'") && !b.startsWith("'")) {
-                return true;
-              }
-            });
-            if (items.length > 0) {
-              if (!result[key]) {
-                result[key] = [];
-              }
-              result[key] = [...result[key], ...items.map(({ locale, value }) => ({ value, locale, file }))];
-            }
+            list.push(...values);
           }
         }
       }
     })
   );
-  Object.keys(result).forEach((key) => {
-    result[key] = [...result[key]];
-  });
-  await fsp.writeFile(Path.join(output, 'properties.json'), JSON.stringify(result, null, 2));
+  if (!output) {
+    console.log(JSON.stringify(list, null, 2) + '\n');
+  } else {
+    const dirname = Path.dirname(output);
+    await fsp.mkdir(dirname, { recursive: true });
+    await fsp.writeFile(output, JSON.stringify(list, null, 2) + '\n');
+  }
 };
