@@ -1,17 +1,17 @@
 const fs = require('fs');
 const { requirejs } = require('../parse-tool');
-const { getBasePath } = require('../utils/ptr');
+const Path = require('path');
 
 let locales;
 
 const getLocales = (basePath) => {
   if (locales) return locales;
-  const dir = getBasePath(basePath);
+  const path = Path.join(basePath, 'www/common/nls');
   const dirlist = fs
-    .readdirSync(dir, { withFileTypes: true })
+    .readdirSync(path, { withFileTypes: true })
     .filter((it) => it.isDirectory())
     .map((it) => it.name);
-  return (locales = dirlist.filter(it => it !== 'fr' && it !== 'ru' && it !== 'pt')); // 临时先过滤掉 fr ru pt
+  return (locales = dirlist.filter((it) => it !== 'fr' && it !== 'ru' && it !== 'pt' && it !== 'ug')); // 临时先过滤掉 fr ru pt ug
 };
 
 const groups = [
@@ -40,9 +40,9 @@ const groups = [
           item.dstObj = dstObj.root;
         }
       },
-      converted: (item) => {
-        const { locale, dst } = item;
-        const locales = getLocales(dst);
+      converted: (item, task) => {
+        const { locale } = item;
+        const locales = getLocales(task.basePath);
         let dstObj = item.dstObj;
         if (locale === 'templates') {
           item.dstObj = {

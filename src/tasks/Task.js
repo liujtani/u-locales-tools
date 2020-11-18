@@ -33,7 +33,7 @@ class Task {
     this.project = group.project;
     this.name = group.name;
     const basePath = config.projects[this.project].basePath;
-    this.srcBase = basePath;
+    this.basePath = basePath;
     this.src = Path.join(basePath, group.src).replace(/\\/g, '/');
     const pattern = group.src.match(/:locale(\([\s\S]*\))?\?/) ? '/:locale?' : '/:locale';
     this.dst = Path.join(config.repoPath, pattern, group.dst).replace(/\\/g, '/');
@@ -349,7 +349,7 @@ class ApplyTask extends Task {
     if (typeof group.dst2 === 'function') {
       this.dst2 = group.dst2(config);
     } else if (typeof group.dst2 === 'string') {
-      this.dst2 = Path.posix.join(this.srcBase, group.dst2);
+      this.dst2 = Path.posix.join(this.basePath, group.dst2);
     }
     this.srcToDst = false;
   }
