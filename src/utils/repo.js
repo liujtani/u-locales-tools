@@ -3,14 +3,13 @@ const fs = require('fs');
 const fsp = fs.promises;
 const { parse, parseLines } = require('dot-properties');
 const { json, properties } = require('../parse-tool');
-const { getConfig } = require('../config');
 const { walk } = require('./extra');
 
-const getRepoData = async (hasComment = true) => {
-  const config = getConfig();
+const getRepoRescourse = async (repoPath, hasComment = true) => {
   const filelist = [];
-  walk(config.repoPath, (path) => {
+  await walk(repoPath, (path) => {
     const ext = Path.extname(path).slice(1);
+    // 目前还不支持其他格式的文件
     if (ext === json || ext === properties) {
       filelist.push(path);
     }
@@ -43,4 +42,4 @@ const getRepoData = async (hasComment = true) => {
   return list;
 };
 
-module.exports.getRepoData = getRepoData;
+module.exports.getRepoRescourse = getRepoRescourse;

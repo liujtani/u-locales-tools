@@ -1,21 +1,24 @@
-module.exports = [
-  {
-    name: 'umooc-view:face',
-    localPath: 'src/main/webapp/js/lang/:locale/:basename.json',
-    remotePath: '1.0_:basename([^/]+?(?<!\\.js)).json',
-    localeMap: {
-      templates: 'zh-cn',
-      'zh-TW': 'zh-tw'
+module.exports = {
+  name: 'umooc-view',
+  groups: [
+    {
+      name: 'face',
+      src: 'src/main/webapp/js/lang/:basename(speakingFaq|face|discussConvention)/:locale.json',
+      dst: '1.0_:basename(speakingFaq|face|discussConvention).json',
+      localeMap: {
+        templates: 'zh-cn',
+        'zh-TW': 'zh-tw'
+      },
+      desc: '1.0 {filename}'
     },
-    desc: '1.0 {filename}'
-  },
-  {
-    name: 'umooc-view:prop',
-    localPath: 'src/main/resources/resources/:prefix(tutor|learner)_:locale.properties',
-    remotePath: ':prefix([^/]+?)_zh.properties',
-    localeMap: {
-      id: 'in'
-    },
-    desc: 'java properties项目'
-  }
-];
+    {
+      name: 'properties',
+      src: 'src/main/resources/resources/:prefix(tutor|learner)_:locale.properties',
+      dst: ':prefix(tutor|learner)_zh.properties',
+      localeMap: {
+        id: 'in'
+      },
+      desc: 'java properties项目'
+    }
+  ]
+};

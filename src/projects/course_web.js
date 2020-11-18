@@ -4,60 +4,67 @@ const { getBasePath } = require('../utils/ptr');
 
 let locales;
 
-const getLocales = (task) => {
+const getLocales = (basePath) => {
   if (locales) return locales;
-  const dir = getBasePath(task.fullLocalPath)
+  const dir = getBasePath(basePath);
   const dirlist = fs
     .readdirSync(dir, { withFileTypes: true })
     .filter((it) => it.isDirectory())
     .map((it) => it.name);
-  return (locales = dirlist);
+  return (locales = dirlist.filter(it => it !== 'fr' && it !== 'ru' && it !== 'pt')); // 临时先过滤掉 fr ru pt
 };
 
-module.exports = [
+const groups = [
   {
-    name: 'course_web:main',
-    filetype: requirejs,
-    localPath: 'www/common/nls/:locale?/:basename.js',
-    remotePath: '2.0_:basename.js.json',
+    name: 'main',
+    src: 'www/common/nls/:locale?/:basename.js',
+    dst: '2.0_:basename.js.json',
+    srcType: requirejs,
     desc: '2.0 {filename}',
     localeMap: {
       templates: ''
     },
-    fillTranstion: false,
-    localHooks: {
-      readed: function (item) {
-        const { obj, locale } = item;
+    fillTranslation: false,
+    srcHooks: {
+      readed: (item) => {
+        const { srcObj, locale } = item;
         if (locale === 'templates') {
-          return obj.root;
-        } else {
-          return obj;
+          item.srcObj = srcObj.root;
         }
       }
     },
-    remoteHooks: {
-      converted: function (item) {
-        const { locale } = item;
-        const locales = getLocales(this);
-        let obj = item.obj
+    dstHooks: {
+      readed: (item) => {
+        const { dstObj, locale } = item;
         if (locale === 'templates') {
-          obj = {
-            root: obj,
+          item.dstObj = dstObj.root;
+        }
+      },
+      converted: (item) => {
+        const { locale, dst } = item;
+        const locales = getLocales(dst);
+        let dstObj = item.dstObj;
+        if (locale === 'templates') {
+          item.dstObj = {
+            root: dstObj,
             ...locales.reduce((accu, curr) => {
               accu[curr] = true;
               return accu;
             }, {})
           };
         }
-        return obj;
       }
     }
   },
   {
-    name: 'course_web:screen',
-    localPath: 'www/screen/src/src/locales/:locale.json',
-    remotePath: '投屏zh.json',
+    name: 'screen',
+    src: 'www/screen/src/src/locales/:locale.json',
+    dst: '投屏zh.json',
     desc: '投屏'
   }
-  // getCkeditor('course_web', 'www/common/vendor', ['imageUploader', 'simplelink'])
 ];
+
+module.exports = {
+  name: 'course_web',
+  groups
+};

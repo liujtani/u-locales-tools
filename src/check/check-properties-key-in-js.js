@@ -3,17 +3,29 @@ const { parse } = require('dot-properties');
 const fs = require('fs');
 const fsp = fs.promises;
 const umoocView = require('../projects/umooc-view');
-const { getTask } = require('../tasks/load-tasks');
 const { walk } = require('../utils/extra');
+const { properties } = require('../parse-tool/types');
+const { getBasePath, match } = require('../utils/ptr');
 
-module.exports.checkProperties = async (config) => {
-  const { output } = config;
-  const task = getTask(umoocView.find((it) => it.name === 'umooc-view:prop'));
-  const files = task.getFileList(task.fullRemotePath);
+module.exports.checkProperties = async (config, options) => {
+  const { projects } = config;
+  const { output } = options;
+  const group = umoocView.groups.find((it) => it.name === 'properties');
+  const basePath = projects['umooc-view'].basePath;
+  const pattern = Path.join(basePath, group.src);
+  const path = getBasePath(pattern.replace(/\\/g, '/'));
+  const files = [];
+  const matchFn = match(group.src);
+  await walk(path, (file) => {
+    if (matchFn(file.replace(/\\/g, '/'))) {
+      files.push(file);
+    }
+  });
+
   const map = {};
   await Promise.all(
     files.map(async (file) => {
-      const obj = parse(await fsp.readFile(file, { encoding: 'utf-8' }));
+      const obj = parse(await fsp.readFile(file, { encoding: 'utf-8' }), properties);
       Object.keys(obj).forEach((key) => {
         if (obj[key].includes("'") || obj[key].includes('"')) {
           const item = {
@@ -32,7 +44,7 @@ module.exports.checkProperties = async (config) => {
   );
   const list = [];
   const jspFiles = [];
-  walk(task.basePath, (file) => {
+  await walk(basePath, (file) => {
     if (Path.extname(file) === '.jsp') {
       jspFiles.push(file);
     }

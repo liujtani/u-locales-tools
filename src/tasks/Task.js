@@ -2,334 +2,331 @@ const Path = require('path');
 const fs = require('fs');
 const fsp = fs.promises;
 const template = require('lodash/template');
-const mergeWith = require('lodash/mergeWith');
-const cloneDeep = require('lodash/cloneDeep');
-const { parse, stringify } = require('../parse-tool');
-
-const { walk } = require('../utils/extra');
-const ptr = require('../utils/ptr');
+const merge = require('lodash/merge');
+const omit = require('lodash/omit');
+const pickBy = require('lodash/pickBy');
 const invert = require('lodash/invert');
-const { convertToRemote, convertToLocal } = require('./convert');
-// const { getConfig } = require('../config');
+const assignWith = require('lodash/assignWith');
+const isNil = require('lodash/isNil');
+const cloneDeep = require('lodash/cloneDeep');
+const { serial, deserial } = require('../utils/serial');
+const { parse, stringify, properties } = require('../parse-tool');
+
+const { walk, pickByTemplate, hasChinese, setBykeys, pickByKeys } = require('../utils/extra');
+const ptr = require('../utils/ptr');
+const { write, hasLocale } = require('./util');
+const log = require('../utils/log');
+const chalk = require('chalk');
 
 class Task {
-  constructor(option) {
-    this.$options = option;
-    this.name = option.name; // 项目的名称，关联配置文件中的 projects[name]
-    this.filetype = option.filetype; // 文件类型，自动从扩展名获得，不过有些扩展名可能不准确，也支持手动指定
-    this.fillTranstion = option.fillTranstion !== false; // 是否支持使用中文补全翻译，默认补全，大多数项目都需要不全翻译，但也有的项目不需要，例如course-web项目
-    this.fillTranstionFn = option.fillTranstionFn; // 补全时，支持传入一个自定义函数
-    this.mergeLocal = option.mergeLocal || false; // 是否需要参考本地文件的格式生成文件
-    this.mergeLocalFn = option.mergeLocalFn;
+  constructor(group, config, cmdOptions) {
+    if (new.target === Task) {
+      throw new Error('');
+    }
+    const defaultLocaleMap = {
+      templates: 'zh',
+      'zh-TW': 'tw'
+    };
 
-    this.basePath = option.basePath; // 项目的基础路径
-    this.localPath = option.localPath.replace(/\\/g, '/'); // 本地的pathRegex
-    this.fullLocalPath = Path.posix.join(this.basePath, this.localPath).replace(/\\/g, '/');
-    // const pattern = this.localPath.match(/:locale(\([\s\S]*\))?\?/) ? '/:locale?' : '/:locale';
-    this.remotePath = Path.posix.join('/:locale', option.remotePath || this.name).replace(/\\/g, '/');
-    // this.fullRemotePath = Path.posix.join(config.repoPath, this.remotePath).replace(/\\/g, '/'); // 远程的pathRegex
-    this.desc = option.desc;
-    this.remoteLocaleMap = Object.assign(
-      {
-        templates: 'zh',
-        'zh-TW': 'tw'
-      },
-      option.localeMap
-    );
-    this.localLocaleMap = invert(this.remoteLocaleMap);
+    this.config = config;
+    this.cmdOptions = cmdOptions;
+    this.project = group.project;
+    this.name = group.name;
+    const basePath = config.projects[this.project].basePath;
+    this.srcBase = basePath;
+    this.src = Path.join(basePath, group.src).replace(/\\/g, '/');
+    const pattern = group.src.match(/:locale(\([\s\S]*\))?\?/) ? '/:locale?' : '/:locale';
+    this.dst = Path.join(config.repoPath, pattern, group.dst).replace(/\\/g, '/');
+    this.dstLocaleMap = Object.assign(defaultLocaleMap, group.localeMap);
+    this.srcLocaleMap = invert(this.dstLocaleMap);
+    this.srcType = group.srcType;
+    this.dstType = group.dstType;
+    this.omitKeys = group.omitKeys || [];
+    if (this.omitKeys.length > 0) {
+      if (!this.omitKeys.every((it) => Array.isArray(it))) {
+        console.log(chalk.yellow(`omitKeys: omitKeys不是一个二元数组 - ${this.omitKeys}`));
+        this.omitKeys = [];
+      }
+    }
 
-    this.doubleBackslash = option.doubleBackslash; // properties 文件才需要这个属性
+    const hooks = group.hooks || {};
+
+    this.beforeLoad = hooks.beforeLoad;
+    this.loaded = hooks.loaded;
+    this.beforeRead = hooks.beforeRead;
+    this.readed = hooks.readed;
+    this.converted = hooks.converted;
+    this.written = hooks.written;
+
+    this.srcToDst = true;
+    // this.doubleBackslash = group.doubleBackslash; // properties 文件才需要这个属性
+    this._check();
   }
 
-  async start(config, direction) {
-    this.config = config;
-    this.direction = !!direction; // local -> remote: true remote -> local: false
-    this.fullRemotePath = Path.posix.join(config.repoPath, this.remotePath).replace(/\\/g, '/'); // 远程的pathRegex
-    if (this._check() === false) {
-      return;
-    }
-    if (this.direction) {
-      this.fromPath = this.fullLocalPath;
-      this.destPath = this.fullRemotePath;
-      this.fromLocaleMap = this.localLocaleMap;
-      this.destLocaleMap = this.remoteLocaleMap;
-      if (this.$options.localHooks) {
-        const hooks = this.$options.localHooks;
-        this.beforeLoad = hooks.beforeLoad;
-        this.loaded = hooks.loaded;
-        this.beforeRead = hooks.beforeRead;
-        this.readed = hooks.readed;
-        this.beforeConvert = hooks.beforeConvert;
-        this.converted = hooks.converted;
-      }
+  static pickByTemplate(obj, src, type) {
+    if (obj === src) return obj;
+    if (type === properties) {
+      return pickBy(obj, (v, k) => !isNil(src[k]));
     } else {
-      this.fromPath = this.fullRemotePath;
-      this.destPath = this.fullLocalPath;
-      this.fromLocaleMap = this.remoteLocaleMap;
-      this.destLocaleMap = this.localLocaleMap;
-      if (this.$options.remoteHooks) {
-        const hooks = this.$options.remoteHooks;
-        this.beforeLoad = hooks.beforeLoad;
-        this.loaded = hooks.loaded;
-        this.beforeRead = hooks.beforeRead;
-        this.readed = hooks.readed;
-        this.beforeConvert = hooks.beforeConvert;
-        this.converted = hooks.converted;
-      }
+      return pickByTemplate(obj, src);
     }
-    this.list = await this._load();
-    await this._read();
-    await this._convert();
-    if (config.fillTranstion) {
-      await this._complete();
-    }
-    await this._write();
   }
 
   _check() {
-    const localKeys = [];
-    const remoteKeys = [];
+    const srcKeys = [];
+    const dstKeys = [];
     try {
-      ptr.pathToRegexp(this.localPath, localKeys);
+      ptr.pathToRegexp(this.src, srcKeys);
     } catch (e) {
-      console.log(this.localPath)
-      throw e
+      log.error(`src: ${this.src} - ${e.message}`);
+      throw e;
     }
     try {
-      ptr.pathToRegexp(this.remotePath, remoteKeys);
+      ptr.pathToRegexp(this.dst, dstKeys);
     } catch (e) {
-      console.log(this.remotePath)
-      throw e
+      log.error(`dst: ${this.dst} - ${e.message}`);
+      throw e;
     }
-    if (localKeys.findIndex((it) => it.name === 'locale') < 0) {
-      console.warn(this.name, 'warn: 缺少必要的参数 locale - ' + this.localPath);
-      console.log(this.name, `${this.localPath} -> ${this.remotePath}`);
-      return false;
+    if (srcKeys.findIndex((it) => it.name === 'locale') < 0) {
+      log.error(`src: ${this.src} 中缺少 locale 参数`);
+      process.exit(1);
     }
-    if (localKeys.findIndex((it) => it.name === 'locale') < 0) {
-      console.warn(this.name, 'warn: 缺少必要的参数 locale - ' + this.remotePath);
-      return false;
+    if (dstKeys.findIndex((it) => it.name === 'locale') < 0) {
+      log.error(`dst: ${this.dst} 中缺少 locale 参数`);
+      process.exit(1);
     }
-    if (localKeys.length !== remoteKeys.length) {
-      console.warn(this.name, 'warn: 两边参数不相等，转换已跳过');
-      console.log(this.name, `${this.localPath} -> ${this.remotePath}`);
-      return false;
+    if (srcKeys.length !== dstKeys.length) {
+      log.error(`${this.src} 和 ${this.dst} 的参数数量不相等：${srcKeys} - ${dstKeys}`);
+      process.exit(1);
     }
-    for (let i = 0; i < localKeys.length; i++) {
-      const index = remoteKeys.findIndex((it) => it.name === localKeys[i].name);
+    for (let i = 0; i < srcKeys.length; i++) {
+      const index = dstKeys.findIndex((it) => it.name === srcKeys[i].name);
       if (index < 0) {
-        console.warn(this.name, 'warn: 两边参数不相同，转换已跳过');
-        console.log(this.name, `${this.localPath} -> ${this.remotePath}`);
-        return false;
+        log.error(`${this.src} 和 ${this.dst} 的参数数量不相同：${srcKeys} - ${dstKeys}`);
+        process.exit(1);
       }
     }
   }
 
-  async _load() {
-    const { fromPath, destPath, fromLocaleMap } = this;
-    if (this.beforeLoad) {
-      this.beforeLoad(this);
+  async start() {
+    this.beforeLoad && this.beforeLoad(this);
+    this.list = await this.load();
+    this.loaded && this.loaded(this);
+    if (this.cmdOptions.list) {
+      log.list(this.list.filter((it) => !it.hidden));
+      return 0;
     }
+
+    await Promise.all(
+      this.list.map(async (item) => {
+        this.beforeLoad && this.beforeRead(item, this);
+        await this.read(item, this);
+        this.readed && this.readed(item, this);
+      })
+    );
+    await Promise.all(
+      this.list.map(async (item) => {
+        await this.convert(item, this);
+        this.converted && this.converted(item, this);
+      })
+    );
+    let count = 0;
+    for (let i = 0; i < this.list.length; i++) {
+      const item = this.list[i];
+      if (item.hidden) continue;
+      const status = await this.write(item, this);
+      status && (count += 1);
+      this.written && this.written(item, this);
+    }
+    return count;
+  }
+
+  async load() {
+    const { src, dst, srcLocaleMap } = this;
     const config = this.config;
-    const basePath = ptr.getBasePath(fromPath);
+    const basePath = ptr.getBasePath(src);
     if (!fs.existsSync(basePath)) {
-      console.warn(this.name, `warn: ${basePath} 路径不存在`);
-      return;
+      log.error(`error: ${basePath} 路径不存在`);
+      process.exit(1);
     }
-    const map = new Map();
-    const temp = new Map();
-    let flag = false;
-    await walk(basePath, (fromFile) => {
-      const matchFn = ptr.match(fromPath);
-      const result = matchFn(fromFile.replace(/\\/g, '/'));
-      if (!result) return;
-      let locale = result.params.locale || '';
-      locale = locale in fromLocaleMap ? fromLocaleMap[locale] : locale;
-      result.params.locale = locale === '' ? undefined : locale;
-      if (config.excludeLocales.has(locale)) {
-        return;
-      }
-      if (config.locales.size > 0 && !config.locales.has(locale)) {
-        return;
-      }
-      const toPathFn = ptr.compile(destPath);
-      let toFile
-      try {
-        toFile = Path.normalize(toPathFn(result.params));
-      } catch (e) {
-        console.error(fromFile)
-        console.error(result)
-        throw e
-      }
-      if (map.has(fromFile)) {
-        console.warn(this.name, `warn: 存在重复的映射关系，转换已跳过`);
-        console.warn(this.name, `warn: ${fromFile} -> ${toFile}`);
-        console.warn(this.name, `warn: ${fromFile} -> ${map.get(fromFile).path}`);
-        map.clear();
-        flag = true;
-        return false;
-      } else {
-        map.set(fromFile, toFile);
-      }
-      if (temp.has(toFile)) {
-        console.warn(this.name, 'warn: 存在重复的映射关系，转换已跳过');
-        console.warn(this.name, `warn: ${fromFile} -> ${toFile}`);
-        console.warn(this.name, `warn: ${temp.get(toFile)} -> ${toFile}`);
-        temp.clear();
-        flag = true;
-        return false;
-      } else {
-        temp.set(toFile, fromFile);
-      }
-    });
-    if (flag && map.size === 0) {
-      console.warn(this.name, `warn: 没有获取到需要转换的文件, 请检查文件路径：${this.name} - ${basePath}`);
-      return;
-    }
+    this.srcBasepath = basePath;
     const list = [];
-    map.forEach((toFile, fromFile) => {
-      const file = this.direction ? toFile : fromFile;
-      const match = ptr.match(this.fullRemotePath);
-      const result = match(file.replace(/\\/g, '/'));
-      list.push({
-        from: fromFile,
-        dest: toFile,
-        locale: result.params.locale,
-        fromType: this.getFromType(fromFile),
-        destType: this.getDestType(toFile)
-      });
+    await walk(basePath, (srcFile) => {
+      const matchFn = ptr.match(src);
+      const result = matchFn(srcFile.replace(/\\/g, '/'));
+      if (!result) return;
+      const srcLocale = result.params.locale || '';
+      const dstLocale = Object.prototype.hasOwnProperty.call(srcLocaleMap, srcLocale) ? srcLocaleMap[srcLocale] : srcLocale;
+      result.params.locale = dstLocale === '' ? undefined : dstLocale;
+      const locale = this.srcToDst ? dstLocale : srcLocale;
+      let hidden = locale === 'templates';
+      if (hidden || hasLocale(locale, config)) {
+        hidden = hidden && !hasLocale(locale, config);
+        const toPathFn = ptr.compile(dst);
+        const dstFile = Path.normalize(toPathFn(result.params));
+        list.push({
+          src: srcFile,
+          dst: dstFile,
+          srcType: this.getType(this.srcType, srcFile),
+          dstType: this.getType(this.dstType, dstFile),
+          locale,
+          hidden: hidden
+        });
+      }
     });
-    if (this.loaded) {
-      return this.loaded(this);
-    }
+    list.sort((a, b) => {
+      if (a.locale === 'templates' && b.locale === 'templates') return 0;
+      if (a.locale === 'templates') return -1;
+      if (b.locale === 'templates') return 1;
+      return 0;
+    });
     return list;
   }
 
-  async _read() {
-    const list = this.list;
-    return Promise.all(
-      list.map(async (item) => {
-        if (this.beforeRead) {
-          this.beforeRead(item, this);
-        }
-        const { from, fromType } = item;
-        const text = await fsp.readFile(from, { encoding: 'utf-8' });
-        item.text = text;
-        try {
-          item.obj = parse(text, fromType);
-        } catch (e) {
-          console.log({
-            form: item.from,
-            dest: item.dest,
-            locale: item.locale
-          });
-          throw e;
-        }
-        if (this.readed) {
-          item.obj = this.readed(item, this);
-        }
-      })
-    );
-  }
-
-  async _convert() {
-    if (this.direction) {
-      await convertToRemote(this);
-    } else {
-      await convertToLocal(this);
+  async read(item) {
+    const { src, srcType, dst, dstType } = item;
+    item.srcText = await fsp.readFile(src, { encoding: 'utf-8' });
+    item.srcObj = parse(item.srcText, { type: srcType, path: src });
+    if (fs.existsSync(dst)) {
+      item.dstText = await fsp.readFile(dst, { encoding: 'utf-8' });
+      item.dstObj = parse(item.dstText, { type: dstType, path: dst });
     }
   }
 
-  async _complete() {
-    const list = this.list;
-    return Promise.all(
-      list.map(async (item) => {
-        const { dest } = item;
-        const templatePath = this.getLocalFile(dest, 'templates');
-        let templateObj;
-        if (dest === templatePath) return item;
-        const index = list.findIndex((it) => it.dest === templatePath);
-        if (index > -1) {
-          templateObj = list[index].obj;
-        } else {
-          if (fs.existsSync(templatePath)) {
-            const filetype = this.getLocalType(templatePath);
-            templateObj = parse(await fsp.readFile(templatePath, { encoding: 'utf-8' }), filetype);
-          } else {
-            console.warn(this.name, '没有找到对应的中文文件，补全翻译将跳过');
-            return item;
+  async convert() {}
+
+  async write(item) {
+    const text = stringify(item.dstObj, { path: item.dst, unicode: !this.srcToDst, type: item.dstType });
+    return write(item.dst, text);
+  }
+
+  getType(type, path) {
+    if (typeof type === 'string') {
+      return type;
+    }
+    const filetype = Path.extname(path).slice(1);
+    if (typeof type === 'object' && type !== null) {
+      return type[filetype] || filetype;
+    }
+    return filetype;
+  }
+
+  getSrcByLocale(path, locale = 'templates') {
+    const newLocale = this.srcToDst ? (Object.prototype.hasOwnProperty.call(this.dstLocaleMap, locale) ? this.dstLocaleMap[locale] : locale) : locale;
+    return this._getPathByLocale(path, this.src, newLocale);
+  }
+
+  getDstByLocale(path, locale = 'templates') {
+    const newLocale = !this.srcToDst ? (Object.prototype.hasOwnProperty.call(this.srcLocaleMap, locale) ? this.srcLocaleMap[locale] : locale) : locale;
+    return this._getPathByLocale(path, this.dst, newLocale);
+  }
+
+  getSrcObj(path, locale) {
+    const newPath = this.getSrcByLocale(path, locale);
+    const index = this.list.findIndex((it) => it.src === newPath);
+    return index > -1 ? this.list[index].srcObj : null;
+  }
+
+  getDstObj(path, locale) {
+    const newPath = this.getDstByLocale(path, locale);
+    const index = this.list.findIndex((it) => it.dst === newPath);
+    return index > -1 ? this.list[index].dstObj : null;
+  }
+
+  _getPathByLocale(path, pattern, locale) {
+    path = path.replace(/\\/g, '/');
+    const match = ptr.match(pattern);
+    const result = match(path);
+    result.params.locale = locale || undefined;
+    const toPath = ptr.compile(pattern);
+    return Path.normalize(toPath(result.params));
+  }
+}
+
+class StoreTask extends Task {
+  constructor(group, config, cmdOptions) {
+    group.hooks = group.srcHooks;
+    super(group, config, cmdOptions);
+    // this.mergeLocal = group.mergeLocal || false; // 是否需要参考本地文件的格式生成文件
+    this.desc = group.desc;
+  }
+
+  async convert(item) {
+    const { src, srcType, locale, hidden } = item;
+    if (hidden) return;
+    let { srcObj, dstObj = {} } = item;
+    const srcTemplateObj = this.getSrcObj(src);
+    item.srcTemplateObj = srcTemplateObj;
+    if (srcTemplateObj) {
+      srcObj = Task.pickByTemplate(srcObj, srcTemplateObj, srcType);
+    }
+
+    this.omitKeys.forEach((keys) => {
+      setBykeys(srcObj, keys, undefined);
+    });
+
+    if (srcType !== properties) {
+      srcObj = serial(srcObj);
+    }
+
+    const containChinese = (message) => {
+      return locale !== 'templates' && locale !== 'zh-TW' && hasChinese(message);
+    };
+
+    if (srcType === properties) {
+      item.dstObj = Object.keys(srcObj).reduce((accu, key) => {
+        if (isNil(srcObj[key])) return accu;
+        const message = srcObj[key].message;
+        if (!containChinese(message)) {
+          accu[key] = {
+            message: message
+          };
+          if (dstObj[key]) {
+            const { oldValue, description } = dstObj[key];
+            if (oldValue === message) {
+              accu[key].message = dstObj[key].message;
+            }
+            const desc = description === undefined ? description : srcObj[key].description;
+            if (desc !== undefined) {
+              accu[key].description = desc;
+            }
           }
         }
-        item.obj = mergeWith(cloneDeep(templateObj), item.obj, this.fillTranstionFn);
-        return item;
-      })
-    );
-  }
-
-  async _write() {
-    const list = this.list;
-    for (let i = 0; i < list.length; i++) {
-      const item = list[i];
-      const obj = item.obj;
-      const destPath = item.dest;
-      const type = item.destType;
-      const text = stringify(obj, type);
-      item.text = text;
-      if (!fs.existsSync(destPath)) {
-        const dirname = Path.dirname(destPath);
-        if (!fs.existsSync(dirname)) {
-          await fsp.mkdir(dirname, { recursive: true });
-        }
-        await fsp.writeFile(destPath, text);
-        // console.log(this.name, destPath);
-      } else {
-        const originalText = await fsp.readFile(destPath, { encoding: 'utf-8' });
-        if (originalText !== text) {
-          await fsp.writeFile(destPath, text);
-          // console.log(this.name, destPath);
-        }
-      }
-      if (!this.direction) {
-        await this._copyToOther(item);
-      }
-    }
-  }
-
-  async _copyToOther(item) {
-    const copyToOther = this.$options.copyToOther;
-    if (copyToOther) {
-      const destPath = item.dest;
-      const text = item.text;
-      const otherDest = Path.join(copyToOther, Path.basename(destPath));
-      if (!fs.existsSync(otherDest)) {
-        if (!fs.existsSync(copyToOther)) {
-          await fsp.mkdir(copyToOther, { recursive: true });
-        }
-        await fsp.writeFile(otherDest, text);
-        // console.log(this.name, otherDest);
-      } else {
-        const originalText = await fsp.readFile(otherDest, { encoding: 'utf-8' });
-        if (originalText !== text) {
-          await fsp.writeFile(otherDest, text);
-          // console.log(this.name, otherDest);
-        }
-      }
-    }
-  }
-
-  getDesc(path) {
-    const obj = Path.parse(path);
-    const info = {
-      filename: obj.base,
-      basename: obj.base,
-      ext: obj.ext,
-      root: obj.root,
-      dirpath: obj.dir,
-      dirname: Path.basename(obj.dir)
-    };
-    if (typeof this.desc === 'function') {
-      return this.desc(info, this);
+        return accu;
+      }, {});
     } else {
+      item.dstObj = Object.keys(srcObj).reduce((accu, key) => {
+        if (isNil(srcObj[key])) return accu;
+        const message = srcObj[key];
+        if (!containChinese(message)) {
+          const { oldValue, message } = dstObj[key] || {};
+          accu[key] = Object.assign(dstObj[key] || {}, {
+            message: oldValue && oldValue === srcObj[key] ? message : srcObj[key],
+            description: (dstObj[key] && dstObj[key].description) || this.getDesc(src)
+          });
+        }
+        return accu;
+      }, {});
+    }
+    // if (!this.cmdOptions.override) {
+    //   item.dstObj = Object.assign(dstObj, item.dstObj)
+    // }
+  }
+
+  getDesc(src) {
+    if (typeof this.desc === 'function') {
+      return this.desc(src, this) || '';
+    } else {
+      if (!this.desc) return '';
+      const obj = Path.parse(src);
+      const info = {
+        filename: obj.base,
+        basename: obj.name,
+        ext: obj.ext,
+        root: obj.root,
+        dirpath: obj.dir,
+        dirname: Path.basename(obj.dir)
+      };
       const compiled = template(this.desc, obj, {
         interpolate: /\{([\s\S]+?)\}/g
         // evaluate: null,
@@ -338,63 +335,112 @@ class Task {
       return compiled(info);
     }
   }
+}
+class ApplyTask extends Task {
+  constructor(group, config, cmdOptions) {
+    group.hooks = group.dstHooks;
+    super(group, config, cmdOptions);
+    this.direction = false;
+    [this.srcType, this.dstType] = [this.dstType, this.srcType];
+    [this.src, this.dst] = [this.dst, this.src];
+    [this.srcLocaleMap, this.dstLocaleMap] = [this.dstLocaleMap, this.srcLocaleMap];
 
-  getTemplatePath(path, locale = 'templates') {
-    const match = ptr.match(this.fullLocalPath);
-    const toPath = ptr.compile(this.fullLocalPath);
-    const result = match(path.replace(/\\/g, '/'));
-    result.params.locale = locale in this.remoteLocaleMap ? this.remoteLocaleMap[locale] : locale;
-    if (result.params.locale === '') {
-      result.params.locale = undefined;
+    this.fillTranslation = group.fillTranslation !== false; // 是否支持使用中文补全翻译，默认补全，大多数项目都需要补全翻译，但也有的项目不需要，例如course-web项目
+    if (typeof group.dst2 === 'function') {
+      this.dst2 = group.dst2(config);
+    } else if (typeof group.dst2 === 'string') {
+      this.dst2 = Path.posix.join(this.srcBase, group.dst2);
     }
-    return toPath(result.params).replace(/\//g, '\\');
+    this.srcToDst = false;
   }
 
-  _getLocalType(path) {
-    if (this.filetype) {
-      return this.filetype;
+  async start() {
+    const count = await super.start();
+    if (!this.cmdOptions.list && this.dst2) {
+      await this.copyToDst2();
+    }
+    return count;
+  }
+
+  async convert(item) {
+    const { srcType, dst, locale, dstType, hidden } = item;
+    let { dstObj, srcObj } = item;
+    let dstTemplateObj = this.getDstObj(dst);
+    item.dstTemplateObj = dstTemplateObj;
+
+    if (srcType === properties) {
+      srcObj = Object.keys(srcObj).reduce((accu, key) => {
+        accu[key] = omit(srcObj[key], ['description', 'footnote']);
+        accu[key].message = accu[key].oldValue || accu[key].message || '';
+        return accu;
+      }, {});
     } else {
-      const ext = Path.extname(path);
-      return ext ? ext.slice(1).toLowerCase() : ext;
+      srcObj = Object.keys(srcObj).reduce((accu, key) => {
+        const value = srcObj[key];
+        accu[key] = (value && (value.oldValue || value.message)) || '';
+        return accu;
+      }, {});
     }
-  }
 
-  _getRemoteType(path) {
-    const ext = Path.extname(path);
-    return ext ? ext.slice(1).toLowerCase() : ext;
-  }
-
-  getFromType(path) {
-    if (this.direction) {
-      return this._getLocalType(path);
-    } else {
-      return this._getRemoteType(path);
+    if (dstType !== properties) {
+      srcObj = deserial(srcObj, dstTemplateObj || dstObj);
     }
-  }
 
-  getDestType(path) {
-    if (this.direction) {
-      return this._getRemoteType(path);
-    } else {
-      return this._getLocalType(path);
-    }
-  }
-
-  async getFileList(pattern) {
-    const fullPath = this.getBasedir(pattern);
-    if (!fs.existsSync(fullPath)) {
-      console.warn(`warn: ${this.name} - ${fullPath} 路径不存在`);
-      return [];
-    }
-    const list = [];
-    walk(fullPath, (file) => {
-      const matchFn = ptr.match(pattern);
-      const result = matchFn(file.replace(/\\/g, '/'));
-      if (result) {
-        list.push(file);
+    if (locale === 'templates') {
+      // dstTemplateObj === dstObj
+      if (dstObj && !hidden) {
+        srcObj = merge(dstObj, srcObj);
       }
-    });
+      if (!hidden) {
+        item.dstObj = srcObj;
+      }
+      return;
+    }
+
+    if (dstObj) {
+      srcObj = merge(dstObj, srcObj);
+    }
+    if (dstTemplateObj) {
+      dstTemplateObj = cloneDeep(dstTemplateObj);
+      const omitObj = pickByKeys(srcObj, this.omitKeys);
+      this.omitKeys.forEach((keys) => {
+        setBykeys(dstTemplateObj, keys, undefined);
+      });
+      srcObj = Task.pickByTemplate(srcObj, dstTemplateObj, srcType);
+      srcObj = merge(srcObj, omitObj);
+
+      if (this.fillTranslation && this.cmdOptions.fill) {
+        if (srcType === properties) {
+          srcObj = assignWith(dstTemplateObj, srcObj, (objValue, srcValue) => {
+            const { message, description } = srcValue;
+            if (!isNil(message)) {
+              objValue.message = message;
+            }
+            objValue.description = description;
+            return objValue;
+          });
+        } else {
+          srcObj = merge(dstTemplateObj, srcObj);
+        }
+      }
+    }
+
+    item.dstObj = srcObj;
+  }
+
+  async copyToDst2() {
+    const dst2 = this.dst2;
+    for (let i = 0; i < this.list.length; i++) {
+      const item = this.list[i];
+      const { dst } = item;
+      if (!fs.existsSync(dst2)) {
+        await fsp.mkdir(dst2, { recursive: true });
+      }
+      await fsp.copyFile(dst, Path.join(dst2, Path.basename(dst)));
+    }
   }
 }
 
 module.exports.Task = Task;
+module.exports.StoreTask = StoreTask;
+module.exports.ApplyTask = ApplyTask;

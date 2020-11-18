@@ -2,7 +2,7 @@ const Path = require('path');
 const fs = require('fs');
 const fsp = fs.promises;
 const { hasChinese } = require('../utils/extra');
-const { getRepoData } = require('../utils/repo');
+const { getRepoRescourse } = require('../utils/repo');
 const isEqual = require('lodash/isEqual');
 
 function getInterpolation(str) {
@@ -41,9 +41,9 @@ const checkInterpolation = (source, target) => {
   return isEqual(set1, set2);
 };
 
-module.exports.checkTranslation = async (config) => {
-  const { output } = config;
-  const list = await getRepoData(false);
+const checkTranslation = async (config, options) => {
+  const { output } = options;
+  const list = await getRepoRescourse(config.repoPath, false);
   const data = {
     unTranslatedFiles: [],
     unTranslatedKeys: {},
@@ -52,8 +52,8 @@ module.exports.checkTranslation = async (config) => {
   };
   const templates = list.filter((it) => it.locale === 'templates');
   const templatesMap = templates.reduce((accu, item) => {
-    const basename = Path.basename(item);
-    accu[basename] = item;
+    const basename = Path.basename(item.path);
+    accu[basename] = item.obj;
     return accu;
   }, {});
   list.forEach((item) => {
@@ -78,7 +78,7 @@ module.exports.checkTranslation = async (config) => {
           }
           data.hasChineseKeys[filekey][key] = { source: templatesMap[basename][key], value: obj[key] };
         }
-        if (checkInterpolation(templatesMap[basename][key], obj[key])) {
+        if (!checkInterpolation(templatesMap[basename][key], obj[key])) {
           if (!data.incorrectInterpolation[filekey]) {
             data.incorrectInterpolation[filekey] = {};
           }
@@ -95,3 +95,5 @@ module.exports.checkTranslation = async (config) => {
     await fsp.writeFile(output, JSON.stringify(data, null, 2) + '\n');
   }
 };
+
+module.exports.checkTranslation = checkTranslation;

@@ -1,5 +1,5 @@
 {
-  "name": "sync",
+  "name": "ulearning-locale-tool",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -9,15 +9,19 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "chalk": "^4.1.0",
     "commander": "^6.1.0",
     "dot-properties": "^1.0.1",
     "joi": "^17.3.0",
     "lodash": "^4.17.15",
     "path-to-regexp": "^6.2.0",
     "prettier": "^2.0.5",
-    "properties": "^1.2.1"
+    "yaml": "^1.10.0"
   },
   "devDependencies": {
     "eslint": "^7.4.0"
+  },
+  "bin": {
+    "ut": "index.js"
   }
 }

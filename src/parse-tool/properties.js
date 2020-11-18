@@ -1,69 +1,90 @@
 const { stringify, parseLines } = require('dot-properties');
 
-exports.parseLines = (text, doubleBackslash = false) => {
-  if (doubleBackslash) {
-    text = text.replace(/\\\\u/g, '\\u');
+const unicode2Ascii = (str) => {
+  let newStr = '';
+  for (let i = 0; i < str.length; i++) {
+    const s = str[i];
+    const code = s.codePointAt(0);
+    if (code > 0xffff) {
+      throw new Error(`${s} -> ${code}: 暂不支持高位码点`);
+    }
+    newStr += code > 127 ? `\\u${code.toString(16).padStart(4, '0')}` : s
   }
+  return newStr
+};
+
+exports.parseLines = (text) => {
+  // if (doubleBackslash) {
+  //   text = text.replace(/\\\\u/g, '\\u');
+  // }
   const lines = parseLines(text, false);
   let lastComments = [];
-  let pairs = {}
+  let pairs = {};
   const obj = {};
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     if (Array.isArray(line)) {
       const item = {
         message: line[1]
-      }
+      };
       if (lastComments.length > 0) {
-        const comment = lastComments.join('\n')
-        item.description = comment
-        lastComments.forEach(c => {
-          c = c.trim()
-          const META = 'meta:'
+        const comment = lastComments.join('\n');
+        item.description = comment;
+        lastComments.forEach((c) => {
+          c = c.trim();
+          const META = 'meta:';
           if (c.startsWith(META)) {
-            const meta = parseLines(c.slice(META.length), false)
+            const meta = parseLines(c.slice(META.length), false);
             if (Array.isArray(meta)) {
-              meta.forEach(m => {
-                item[m[0]] = item[m[1]]
-              })
+              meta.forEach((m) => {
+                item[m[0]] = item[m[1]];
+              });
             }
           }
-        })
+        });
       }
       pairs = obj[line[0]] = item;
-      lastComments = []
+      lastComments = [];
     } else {
-      lastComments.push(line)
+      lastComments.push(line);
     }
   }
   if (lastComments.length > 0) {
-    pairs.footnote = lastComments.join('\n')
+    pairs.footnote = lastComments.join('\n');
   }
   return obj;
 };
 
 exports.stringify = (obj, { unicode = false, doubleBackslash = false } = {}) => {
-  let lines = []
-  let footnote
-  const keys = Object.keys(obj)
+  let lines = [];
+  let footnote;
+  const keys = Object.keys(obj);
+  if (unicode) {
+    keys.forEach((key) => {
+      if (typeof obj[key].message === 'string') {
+        obj[key].message = unicode2Ascii(obj[key].message);
+      }
+    });
+  }
   for (let i = 0; i < keys.length; i++) {
     const key = keys[i];
-    const value = obj[key]
-    if (value.description) {
-      lines.push(value.description)
+    const value = obj[key];
+    if (value.description !== undefined) {
+      const desc = value.description.split('\n').map(it => it.trim())
+      lines.push(...desc)
     }
-    lines.push([key, value.message])
+    lines.push([key, value.message]);
     if (value.footnote) {
-      footnote = value.footnote
+      footnote = value.footnote;
     }
   }
-  if (footnote) {
-    lines.push(footnote)
+  if (footnote !== undefined) {
+    lines.push(footnote);
   }
   const str = stringify(lines, {
     lineWidth: null,
     newline: '\n',
-    latin1: !unicode
-  });
-  return doubleBackslash ? str.replace(/\\u/g, '\\\\u') : str;
+    latin1: false
+  }).trim() + '\n';
+  return !doubleBackslash ? str.replace(/\\\\u(?=[0-9a-f]{4})/g, '\\u') : str;
 };

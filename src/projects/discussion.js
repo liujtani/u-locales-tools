@@ -1,7 +1,10 @@
-
 module.exports = {
   name: 'discussion',
-  remotePath: '讨论_zh.json',
-  localPath: 'src/locales/:locale.json',
-  desc: '讨论'
+  groups: [
+    {
+      src: 'src/locales/:locale.json',
+      dst: '讨论_zh.json',
+      desc: '讨论'
+    }
+  ]
 };

@@ -14,12 +14,11 @@ module.exports.match = (path, options) => ptr.match(path, Object.assign({}, defa
 module.exports.compile = (path, options) => ptr.compile(path, Object.assign({}, defaultOptions, options));
 module.exports.getBasePath = (path, options) => {
   const tokens = ptr.parse(path, Object.assign({}, defaultOptions, options));
-  const prefixPath = tokens[0]
-  const regexPath = tokens[1]
+  const prefixPath = tokens[0];
+  const regexPath = tokens[1];
   if (regexPath && !regexPath.prefix) {
-    return Path.dirname(prefixPath)
+    return Path.dirname(prefixPath);
   } else {
-    return prefixPath
+    return prefixPath;
   }
 };
-

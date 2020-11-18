@@ -1,10 +1,13 @@
-
 module.exports = {
-  name: 'activity1',
-  localPath: '1.0/src/assets/language/:locale.json',
-  remotePath: '小组作业ch.json',
-  localeMap: {
-    templates: 'ch'
-  },
-  desc: '小组作业'
+  name: 'ulearning_mobile_1.0',
+  groups: [
+    {
+      src: 'src/assets/language/:locale.json',
+      dst: '小组作业ch.json',
+      localeMap: {
+        templates: 'ch'
+      },
+      desc: '小组作业'
+    }
+  ]
 };

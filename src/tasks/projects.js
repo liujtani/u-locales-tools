@@ -1,5 +1,3 @@
-const flatten = require('lodash/flatten');
-
 // PC
 const courseWeb = require('../projects/course_web'); // courseweb项目
 const uaWeb = require('../projects/ua-web'); // ua-web
@@ -18,4 +16,17 @@ const umoocMobile = require('../projects/umooc-mobile');
 // PC & mobile
 const homework = require('../projects/homework');
 
-module.exports = flatten([courseWeb, uaWeb, umoocStatic, umoocView, umoocWeb, smartClassroom, activity1, activity2, discussion, exam, umoocMobile, homework]);
+module.exports = [
+  courseWeb,
+  uaWeb,
+  umoocStatic,
+  umoocView,
+  umoocWeb,
+  smartClassroom,
+  activity1,
+  activity2,
+  discussion,
+  exam,
+  umoocMobile,
+  homework
+];
