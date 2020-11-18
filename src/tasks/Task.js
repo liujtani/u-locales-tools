@@ -327,7 +327,7 @@ class StoreTask extends Task {
         dirpath: obj.dir,
         dirname: Path.basename(obj.dir)
       };
-      const compiled = template(this.desc, obj, {
+      const compiled = template(this.desc, {
         interpolate: /\{([\s\S]+?)\}/g
         // evaluate: null,
         // escape: null
