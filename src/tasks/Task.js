@@ -65,11 +65,19 @@ class Task {
 
   static pickByTemplate(obj, src, type) {
     if (obj === src) return obj;
+    let object;
     if (type === properties) {
-      return pickBy(obj, (v, k) => !isNil(src[k]));
+      object = pickBy(obj, (v, k) => src[k] !== undefined);
     } else {
-      return pickByTemplate(obj, src);
+      object = pickByTemplate(obj, src);
     }
+    const newObject = {};
+    Object.keys(src).forEach((key) => {
+      if (object[key] !== undefined) {
+        newObject[key] = object[key];
+      }
+    });
+    return Object.assign(newObject, object)
   }
 
   _check() {
