@@ -48,6 +48,7 @@ class Task {
         this.omitKeys = [];
       }
     }
+    this.fillTranslation = group.fillTranslation !== false; // 是否支持使用中文补全翻译，默认补全，大多数项目都需要补全翻译，但也有的项目不需要，例如course-web项目
 
     const hooks = group.hooks || {};
 
@@ -277,8 +278,10 @@ class StoreTask extends Task {
       srcObj = serial(srcObj);
     }
 
+    const filled  = this.cmdOptions.fill && this.fillTranslation
+
     const containChinese = (message) => {
-      return locale !== 'templates' && locale !== 'zh-TW' && hasChinese(message);
+      return filled && locale !== 'templates' && locale !== 'zh-TW' && hasChinese(message);
     };
 
     if (srcType === properties) {
@@ -353,7 +356,6 @@ class ApplyTask extends Task {
     [this.src, this.dst] = [this.dst, this.src];
     [this.srcLocaleMap, this.dstLocaleMap] = [this.dstLocaleMap, this.srcLocaleMap];
 
-    this.fillTranslation = group.fillTranslation !== false; // 是否支持使用中文补全翻译，默认补全，大多数项目都需要补全翻译，但也有的项目不需要，例如course-web项目
     if (typeof group.dst2 === 'function') {
       this.dst2 = group.dst2(config);
     } else if (typeof group.dst2 === 'string') {
