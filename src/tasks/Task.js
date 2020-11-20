@@ -206,6 +206,9 @@ class Task {
   async convert() {}
 
   async write(item) {
+    if (!fs.existsSync(item.dst) && Object.keys(item.dstObj)) {
+      return;
+    }
     const text = stringify(item.dstObj, { path: item.dst, unicode: !this.srcToDst, type: item.dstType });
     return write(item.dst, text);
   }
