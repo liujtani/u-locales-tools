@@ -33,10 +33,11 @@ class Task {
     this.project = group.project;
     this.name = group.name;
     const basePath = config.projects[this.project].basePath;
-    this.basePath = basePath;
-    this.src = Path.join(basePath, group.src).replace(/\\/g, '/');
-    const pattern = group.src.match(/:locale(\([\s\S]*\))?\?/) ? '/:locale?' : '/:locale';
-    this.dst = Path.join(config.repoPath, pattern, group.dst).replace(/\\/g, '/');
+    this.srcBasePath = basePath;
+    this.src = group.src.replace(/\\/g, '/');
+    const pattern = group.src.match(/:locale(\([\s\S]*\))?\?/) ? ':locale?' : ':locale';
+    this.dstBasePath = config.repoPath;
+    this.dst = Path.join(pattern, group.dst).replace(/\\/g, '/');
     this.dstLocaleMap = Object.assign(defaultLocaleMap, group.localeMap);
     this.srcLocaleMap = invert(this.dstLocaleMap);
     this.srcType = group.srcType;
@@ -153,7 +154,7 @@ class Task {
   async load() {
     const { src, dst, srcLocaleMap } = this;
     const config = this.config;
-    const basePath = ptr.getBasePath(src);
+    const basePath = Path.join(this.srcBasePath, ptr.getBasePath(src));
     if (!fs.existsSync(basePath)) {
       log.error(`error: ${basePath} 路径不存在`);
       process.exit(1);
@@ -175,7 +176,7 @@ class Task {
         const dstFile = Path.normalize(toPathFn(result.params));
         list.push({
           src: srcFile,
-          dst: dstFile,
+          dst: Path.join(this.dstBasePath, dstFile),
           srcType: this.getType(this.srcType, srcFile),
           dstType: this.getType(this.dstType, dstFile),
           locale,
@@ -222,12 +223,12 @@ class Task {
 
   getSrcByLocale(path, locale = 'templates') {
     const newLocale = this.srcToDst ? (Object.prototype.hasOwnProperty.call(this.dstLocaleMap, locale) ? this.dstLocaleMap[locale] : locale) : locale;
-    return this._getPathByLocale(path, this.src, newLocale);
+    return Path.join(this.srcBasePath, this._getPathByLocale(path, this.src, newLocale));
   }
 
   getDstByLocale(path, locale = 'templates') {
     const newLocale = !this.srcToDst ? (Object.prototype.hasOwnProperty.call(this.srcLocaleMap, locale) ? this.srcLocaleMap[locale] : locale) : locale;
-    return this._getPathByLocale(path, this.dst, newLocale);
+    return Path.join(this.dstBasePath, this._getPathByLocale(path, this.dst, newLocale));
   }
 
   getSrcObj(path, locale) {
@@ -354,12 +355,13 @@ class ApplyTask extends Task {
     this.direction = false;
     [this.srcType, this.dstType] = [this.dstType, this.srcType];
     [this.src, this.dst] = [this.dst, this.src];
+    [this.srcBasePath, this.dstBasePath] = [this.dstBasePath, this.srcBasePath];
     [this.srcLocaleMap, this.dstLocaleMap] = [this.dstLocaleMap, this.srcLocaleMap];
 
     if (typeof group.dst2 === 'function') {
       this.dst2 = group.dst2(config);
     } else if (typeof group.dst2 === 'string') {
-      this.dst2 = Path.posix.join(this.basePath, group.dst2);
+      this.dst2 = Path.posix.join(this.dstBasePath, group.dst2);
     }
     this.srcToDst = false;
   }

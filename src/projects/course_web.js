@@ -42,7 +42,7 @@ const groups = [
       },
       converted: (item, task) => {
         const { locale } = item;
-        const locales = getLocales(task.basePath);
+        const locales = getLocales(task.dstBasePath);
         let dstObj = item.dstObj;
         if (locale === 'templates') {
           item.dstObj = {

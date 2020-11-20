@@ -1,5 +1,6 @@
 module.exports = {
   repo: '../ulearning-asia',
+  basePath: '',
   defaultBranch: 'bugfix', // 默认分支，默认为空字符串
   projects: {
     course_web: {
