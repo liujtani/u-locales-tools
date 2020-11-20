@@ -79,7 +79,7 @@ class Task {
         newObject[key] = object[key];
       }
     });
-    return Object.assign(newObject, object)
+    return Object.assign(newObject, object);
   }
 
   _check() {
