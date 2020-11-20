@@ -33,7 +33,8 @@ const groups = [
       templates: 'zh-cn',
       'zh-TW': 'zh-tw'
     },
-    fillTranslation: false
+    fillTranslation: false,
+    omitKeys: [['aLongWeekStr', 8]]
   },
 
   {
