@@ -77,7 +77,7 @@ const getGroups = (config) => {
     }
   });
 
-  invalidTasks(config, excludeTasks, includeTasks);
+  invalidTasks(config, includeTasks, excludeTasks);
 
   return list;
 };
