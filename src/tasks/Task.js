@@ -282,45 +282,40 @@ class StoreTask extends Task {
       srcObj = serial(srcObj);
     }
 
-    const filled  = this.cmdOptions.fill && this.fillTranslation
+    const filled = this.cmdOptions.fill && this.fillTranslation && locale !== 'templates' && locale !== 'zh-TW';
 
     const containChinese = (message) => {
-      return filled && locale !== 'templates' && locale !== 'zh-TW' && hasChinese(message);
+      return filled && hasChinese(message);
+    };
+
+    const convert = (accu, key, message, description) => {
+      if (isNil(message)) return accu;
+      if (!containChinese(message)) {
+        accu[key] = dstObj[key] || {};
+        if (locale === 'templates') {
+          accu[key].message = message;
+        } else {
+          if (message === accu[key].message) {
+            accu[key].oldValue = undefined;
+          } else {
+            accu[key].oldValue = message;
+          }
+        }
+        if (description && accu[key].description === undefined) {
+          accu[key].description = description;
+        }
+      }
+      return accu;
     };
 
     if (srcType === properties) {
       item.dstObj = Object.keys(srcObj).reduce((accu, key) => {
-        if (isNil(srcObj[key])) return accu;
-        const message = srcObj[key].message;
-        if (!containChinese(message)) {
-          accu[key] = {
-            message: message
-          };
-          if (dstObj[key]) {
-            const { oldValue, description } = dstObj[key];
-            if (oldValue === message) {
-              accu[key].message = dstObj[key].message;
-            }
-            const desc = description === undefined ? description : srcObj[key].description;
-            if (desc !== undefined) {
-              accu[key].description = desc;
-            }
-          }
-        }
-        return accu;
+        return convert(accu, key, srcObj[key].message, srcObj[key].description);
       }, {});
     } else {
+      const desc = this.getDesc(src);
       item.dstObj = Object.keys(srcObj).reduce((accu, key) => {
-        if (isNil(srcObj[key])) return accu;
-        const message = srcObj[key];
-        if (!containChinese(message)) {
-          const { oldValue, message } = dstObj[key] || {};
-          accu[key] = Object.assign(dstObj[key] || {}, {
-            message: oldValue && oldValue === srcObj[key] ? message : srcObj[key],
-            description: (dstObj[key] && dstObj[key].description) || this.getDesc(src)
-          });
-        }
-        return accu;
+        return convert(accu, key, srcObj[key], desc);
       }, {});
     }
     // if (!this.cmdOptions.override) {
