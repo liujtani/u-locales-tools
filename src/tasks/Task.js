@@ -62,7 +62,7 @@ class Task {
 
     this.srcToDst = true;
     // this.doubleBackslash = group.doubleBackslash; // properties 文件才需要这个属性
-    this._check();
+    // this.check();
   }
 
   static pickByTemplate(obj, src, type) {
@@ -82,7 +82,7 @@ class Task {
     return Object.assign(newObject, object);
   }
 
-  _check() {
+  check() {
     const srcKeys = [];
     const dstKeys = [];
     try {
@@ -116,9 +116,21 @@ class Task {
         process.exit(1);
       }
     }
+    // check basePath
+    const { src } = this;
+    const basePath = Path.join(this.srcBasePath, ptr.getBasePath(src));
+    if (!fs.existsSync(basePath)) {
+      log.error(`${this.project}${this.name ? ':' + this.name : ''} ${basePath} 路径不存在`);
+      process.exit(1);
+    }
+    this.srcPrefixPath = basePath;
+    this._checked = true;
   }
 
   async start() {
+    if (!this._checked) {
+      this.check();
+    }
     this.beforeLoad && this.beforeLoad(this);
     this.list = await this.load();
     this.loaded && this.loaded(this);
@@ -154,12 +166,11 @@ class Task {
   async load() {
     const { src, dst, srcLocaleMap } = this;
     const config = this.config;
-    const basePath = Path.join(this.srcBasePath, ptr.getBasePath(src));
-    if (!fs.existsSync(basePath)) {
-      log.error(`error: ${basePath} 路径不存在`);
-      process.exit(1);
-    }
-    this.srcBasepath = basePath;
+    const basePath = this.srcPrefixPath;
+    // if (!fs.existsSync(basePath)) {
+    //   log.error(`error: ${basePath} 路径不存在`);
+    //   process.exit(1);
+    // }
     const list = [];
     await walk(basePath, (srcFile) => {
       const matchFn = ptr.match(src);

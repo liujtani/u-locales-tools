@@ -3,14 +3,26 @@ const { checkProperties } = require('./check/check-properties-key-in-js');
 const { checkTranslation } = require('./check/check-translation');
 const { ApplyTask, StoreTask } = require('./tasks/Task');
 const chalk = require('chalk');
+const fs = require('fs');
+const log = require('./utils/log');
 
 const exec = async (config, options, Task) => {
+  if (!fs.existsSync(config.repoPath)) {
+    log.error(`repoPath: 仓库地址 - ${config.repoPath}不存在`);
+    process.exit(1);
+  }
   const groups = getGroups(config);
   if (groups.length === 0) {
     console.log(chalk.yellow('任务列表为空'));
   }
+  const tasks = new Array(groups.length);
   for (let i = 0; i < groups.length; i++) {
     const task = new Task(groups[i], config, options);
+    tasks[i] = task;
+    task.check();
+  }
+  for (let i = 0; i < tasks.length; i++) {
+    const task = tasks[i];
     console.log(chalk.green.bold(`${task.project}${task.name ? ':' + task.name : ''}`));
     const count = await task.start();
     if (!options.list) {
@@ -34,12 +46,12 @@ module.exports.list = (config) => {
   const nameCol = 'name';
   const aliasCol = 'alias';
   const groupsCol = 'groups';
-  const nameMax = Math.max(nameCol.length, ...projects.filter((it) => it.name).map(it => it.name.length));
-  const aliasMax = Math.max(aliasCol.length, ...projects.filter((it) => it.alias).map(it => it.alias.length));
+  const nameMax = Math.max(nameCol.length, ...projects.filter((it) => it.name).map((it) => it.name.length));
+  const aliasMax = Math.max(aliasCol.length, ...projects.filter((it) => it.alias).map((it) => it.alias.length));
   const gutter = ' '.repeat(8);
-  const header = `${nameCol.padEnd(nameMax, ' ')}${gutter}${aliasCol.padEnd(aliasMax, ' ')}${gutter}${groupsCol}`
+  const header = `${nameCol.padEnd(nameMax, ' ')}${gutter}${aliasCol.padEnd(aliasMax, ' ')}${gutter}${groupsCol}`;
   console.log(header);
-  console.log('-'.repeat(header.length + 8))
+  console.log('-'.repeat(header.length + 8));
   const log = (name, alias, groups) => {
     const nameColumn = (name || '').padEnd(nameMax, ' ');
     const aliasColumn = (alias || '').padEnd(aliasMax, ' ');
@@ -50,7 +62,11 @@ module.exports.list = (config) => {
     const { name, groups } = projects[i];
     if (name) {
       const alias = config.projects[name] && config.projects[name].alias;
-      log(name, alias, groups.map(it => it.name));
+      log(
+        name,
+        alias,
+        groups.map((it) => it.name)
+      );
     }
   }
 };
