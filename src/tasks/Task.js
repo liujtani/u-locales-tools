@@ -454,10 +454,12 @@ class ApplyTask extends Task {
     for (let i = 0; i < this.list.length; i++) {
       const item = this.list[i];
       const { dst } = item;
-      if (!fs.existsSync(dst2)) {
-        await fsp.mkdir(dst2, { recursive: true });
+      if (fs.existsSync(dst)) {
+        if (!fs.existsSync(dst2)) {
+          await fsp.mkdir(dst2, { recursive: true });
+        }
+        await fsp.copyFile(dst, Path.join(dst2, Path.basename(dst)));
       }
-      await fsp.copyFile(dst, Path.join(dst2, Path.basename(dst)));
     }
   }
 }
