@@ -15,7 +15,8 @@ program
   .option('-e --exclude-locales <locales...>', '指定要排除的语言')
   .option('-u --exclude-templates', '排除中文进行转换')
   .option('-l --list', '不真的进行转换，仅列出要转换的列表')
-  .option('-t --task <tasks...>', '指定要仅要运行的项目');
+  .option('-t --task <tasks...>', '指定要仅要运行的项目')
+  .option('--no-fill', '禁止同时将未翻译的文本使用中文补全');
 
 program
   .command('store')
@@ -29,7 +30,6 @@ program
 program
   .command('apply')
   .description('将上游仓库的翻译资源转换并应用到本地项目中')
-  .option('--no-fill', '禁止同时将未翻译的文本使用中文补全')
   .action((options) => {
     const opts = Object.assign(program.opts(), options);
     const config = initConfig(opts);
@@ -50,7 +50,6 @@ program
   .description('ckeditor 插件翻译转换')
   .option('-S --store', '将指定项目的ckeditor插件翻译同步到上游仓库')
   .option('-A --apply', '将上游仓库的ckeditor插件翻译同步到本地')
-  .option('--no-fill', '禁止同时将未翻译的文本使用中文补全')
   .option('--order <projects...>', '选择要同步的项目，默认顺序是 course_web，umooc_homework_front, ua_web，支持alias')
   .action((options) => {
     const opts = Object.assign(program.opts(), options);
