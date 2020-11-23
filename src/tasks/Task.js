@@ -303,15 +303,7 @@ class StoreTask extends Task {
       if (isNil(message)) return accu;
       if (!containChinese(message)) {
         accu[key] = dstObj[key] || {};
-        if (locale === 'templates') {
-          accu[key].message = message;
-        } else {
-          if (message === accu[key].message) {
-            accu[key].oldValue = undefined;
-          } else {
-            accu[key].oldValue = message;
-          }
-        }
+        accu[key].message = message;
         if (description && accu[key].description === undefined) {
           accu[key].description = description;
         }
