@@ -1,4 +1,4 @@
-const { stringify, parseLines } = require('dot-properties');
+const { stringify, parseLines, parse } = require('dot-properties');
 
 const unicode2Ascii = (str) => {
   let newStr = '';
@@ -8,9 +8,9 @@ const unicode2Ascii = (str) => {
     if (code > 0xffff) {
       throw new Error(`${s} -> ${code}: 暂不支持高位码点`);
     }
-    newStr += code > 127 ? `\\u${code.toString(16).padStart(4, '0')}` : s
+    newStr += code > 127 ? `\\u${code.toString(16).padStart(4, '0')}` : s;
   }
-  return newStr
+  return newStr;
 };
 
 exports.parseLines = (text) => {
@@ -24,7 +24,7 @@ exports.parseLines = (text) => {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     if (Array.isArray(line)) {
-      const item = {
+      let item = {
         message: line[1]
       };
       if (lastComments.length > 0) {
@@ -32,14 +32,11 @@ exports.parseLines = (text) => {
         item.description = comment;
         lastComments.forEach((c) => {
           c = c.trim();
+          c = c.replace(/^#\s*/, '');
           const META = 'meta:';
           if (c.startsWith(META)) {
-            const meta = parseLines(c.slice(META.length), false);
-            if (Array.isArray(meta)) {
-              meta.forEach((m) => {
-                item[m[0]] = item[m[1]];
-              });
-            }
+            const meta = parse(c.slice(META.length), false);
+            item = Object.assign(meta, item);
           }
         });
       }
@@ -70,10 +67,10 @@ exports.stringify = (obj, { unicode = false, doubleBackslash = false } = {}) => 
     const key = keys[i];
     const value = obj[key];
     if (value.description !== undefined) {
-      const desc = value.description.split('\n').map(it => it.trim())
-      lines.push(...desc)
+      const desc = value.description.split('\n').map((it) => it.trim());
+      lines.push(...desc);
     }
-    lines.push([key, value.message]);
+    lines.push([key, !value.message && typeof value.message !== 'number' ? '' : value.message]);
     if (value.footnote) {
       footnote = value.footnote;
     }
@@ -81,10 +78,11 @@ exports.stringify = (obj, { unicode = false, doubleBackslash = false } = {}) => 
   if (footnote !== undefined) {
     lines.push(footnote);
   }
-  const str = stringify(lines, {
-    lineWidth: null,
-    newline: '\n',
-    latin1: false
-  }).trim() + '\n';
+  const str =
+    stringify(lines, {
+      lineWidth: null,
+      newline: '\n',
+      latin1: false
+    }).trim() + '\n';
   return !doubleBackslash ? str.replace(/\\\\u(?=[0-9a-f]{4})/g, '\\u') : str;
 };
