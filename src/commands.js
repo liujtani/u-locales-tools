@@ -24,11 +24,13 @@ const exec = async (config, options, Task) => {
   for (let i = 0; i < tasks.length; i++) {
     const task = tasks[i];
     console.log(chalk.green.bold(`${task.project}${task.name ? ':' + task.name : ''}`));
-    const count = await task.start();
-    if (!options.list) {
+    await task.start();
+  }
+  if (!options.list) {
+    for (let i = 0; i < tasks.length; i++) {
+      const task = tasks[i];
+      const count = await task.write();
       console.log(chalk.green(`转换完成：${count > 0 ? '更改了' + count + '个文件' : '没有文件发生更改'}\n`));
-    } else {
-      console.log('');
     }
   }
 };

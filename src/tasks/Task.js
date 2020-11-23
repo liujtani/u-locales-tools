@@ -152,15 +152,6 @@ class Task {
         this.converted && this.converted(item, this);
       })
     );
-    let count = 0;
-    for (let i = 0; i < this.list.length; i++) {
-      const item = this.list[i];
-      if (item.hidden) continue;
-      const status = await this.write(item, this);
-      status && (count += 1);
-      this.written && this.written(item, this);
-    }
-    return count;
   }
 
   async load() {
@@ -216,12 +207,21 @@ class Task {
 
   async convert() {}
 
-  async write(item) {
-    if (!fs.existsSync(item.dst) && Object.keys(item.dstObj)) {
-      return;
+  async write() {
+    let count = 0;
+    for (let i = 0; i < this.list.length; i++) {
+      const item = this.list[i];
+      if (!item.hidden) {
+        if (!fs.existsSync(item.dst) && Object.keys(item.dstObj)) {
+          continue;
+        }
+        const text = stringify(item.dstObj, { path: item.dst, unicode: !this.srcToDst, type: item.dstType });
+        const status = await write(item.dst, text);
+        status && (count += 1);
+        this.written && this.written(item, this);
+      }
     }
-    const text = stringify(item.dstObj, { path: item.dst, unicode: !this.srcToDst, type: item.dstType });
-    return write(item.dst, text);
+    return count;
   }
 
   getType(type, path) {
@@ -375,14 +375,6 @@ class ApplyTask extends Task {
     this.srcToDst = false;
   }
 
-  async start() {
-    const count = await super.start();
-    if (!this.cmdOptions.list && this.dst2) {
-      await this.copyToDst2();
-    }
-    return count;
-  }
-
   async convert(item) {
     const { srcType, dst, locale, dstType, hidden } = item;
     let { dstObj, srcObj } = item;
@@ -447,6 +439,14 @@ class ApplyTask extends Task {
     }
 
     item.dstObj = srcObj;
+  }
+
+  async write() {
+    const count = await super.write();
+    if (this.dst2) {
+      await this.copyToDst2();
+    }
+    return count;
   }
 
   async copyToDst2() {
