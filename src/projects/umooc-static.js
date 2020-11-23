@@ -1,6 +1,7 @@
 const { datepicker, kindeditor } = require('../parse-tool');
 const cloneDeep = require('lodash/cloneDeep');
 const Path = require('path');
+const log = require('../utils/log');
 
 let _templateObj;
 
@@ -84,6 +85,27 @@ const groups = [
               object.desc = item.desc;
             }
             return object;
+          });
+        };
+        convert('symbols');
+        convert('subjects');
+        convert('formulas');
+      }
+    },
+    dstHooks: {
+      converted: (item) => {
+        const { dstObj, locale } = item;
+        const convert = (key) => {
+          dstObj[key].forEach((value) => {
+            const { list } = value;
+            let index = 0;
+            Object.keys(list).forEach((k) => {
+              if (index !== +k) {
+                log.error(`${locale}/attachMathJax.${key}：${k}不是一个数组索引，或者两个key之间存在间隙`);
+                process.exit(1);
+              }
+              index += 1;
+            });
           });
         };
         convert('symbols');
