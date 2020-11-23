@@ -16,7 +16,8 @@ program
   .option('-u --exclude-templates', '排除中文进行转换')
   .option('-l --list', '不真的进行转换，仅列出要转换的列表')
   .option('-t --task <tasks...>', '指定要仅要运行的项目')
-  .option('--no-fill', '禁止同时将未翻译的文本使用中文补全');
+  .option('--no-fill', '禁止同时将未翻译的文本使用中文补全')
+  .option('-n --dry-run', '仅进行转换，不写入文件')
 
 program
   .command('store')

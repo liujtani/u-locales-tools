@@ -111,6 +111,7 @@ const apply = async (config, cmdOptions, plugins) => {
     const srcLocale = localeMap[locale] || locale;
     item._obj = { message: item.srcObj, id: plugin, locale: srcLocale };
   }
+  if (cmdOptions.dryRun) return;
   let count = 0;
   for (let i = 0; i < newList.length; i++) {
     const item = newList[i];

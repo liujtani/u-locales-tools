@@ -126,6 +126,7 @@ const store = async (config, cmdOptions, plugins) => {
     }, {});
     item.text = stringify(item.dstObj, { type: dstType, path: dst });
   }
+  if (cmdOptions.dryRun) return;
   let count = 0;
   for (let i = 0; i < newList.length; i++) {
     const item = newList[i];

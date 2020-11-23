@@ -21,15 +21,21 @@ const exec = async (config, options, Task) => {
     tasks[i] = task;
     task.check();
   }
-  for (let i = 0; i < tasks.length; i++) {
-    const task = tasks[i];
-    console.log(chalk.green.bold(`${task.project}${task.name ? ':' + task.name : ''}`));
-    await task.start();
-  }
-  if (!options.list) {
+  if (options.list || options.dryRun) {
+    for (let i = 0; i < tasks.length; i++) {
+      const task = tasks[i];
+      console.log(chalk.green.bold(`${task.project}${task.name ? ':' + task.name : ''}`));
+      await task.start();
+    }   
+  } else {
+    for (let i = 0; i < tasks.length; i++) {
+      const task = tasks[i];
+      await task.start();
+    }
     for (let i = 0; i < tasks.length; i++) {
       const task = tasks[i];
       const count = await task.write();
+      console.log(chalk.green.bold(`${task.project}${task.name ? ':' + task.name : ''}`));
       console.log(chalk.green(`转换完成：${count > 0 ? '更改了' + count + '个文件' : '没有文件发生更改'}\n`));
     }
   }
