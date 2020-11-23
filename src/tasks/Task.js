@@ -212,7 +212,7 @@ class Task {
     for (let i = 0; i < this.list.length; i++) {
       const item = this.list[i];
       if (!item.hidden) {
-        if (!fs.existsSync(item.dst) && Object.keys(item.dstObj)) {
+        if (!fs.existsSync(item.dst) && Object.keys(item.dstObj).length === 0) {
           continue;
         }
         const text = stringify(item.dstObj, { path: item.dst, unicode: !this.srcToDst, type: item.dstType });
