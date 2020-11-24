@@ -70,10 +70,14 @@ const normalize = (options) => {
   }
   config = value;
   config.repoPath = Path.join(config.repo, 'locales');
-  config.locales = config.locales.concat(options.locales || []);
-  config.locales = new Set(getLocales(config.locales));
-  if (options.templates) {
-    config.locales.add('templates');
+  if (options.onlyTemplate) {
+    config.locales = new Set(['templates'])
+  } else {
+    const locales = config.locales.concat(options.locales || []);
+    config.locales = new Set(getLocales(locales));
+    if (options.templates) {
+      config.locales.add('templates');
+    }
   }
   config.excludeLocales = config.excludeLocales.concat(options.excludeLocales || []);
   config.excludeLocales = new Set(getLocales(config.excludeLocales));

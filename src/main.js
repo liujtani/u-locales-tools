@@ -18,12 +18,13 @@ program
   .option('-t --task <tasks...>', '指定要仅要运行的项目')
   .option('--no-fill', '禁止同时将未翻译的文本使用中文补全')
   .option('-n --dry-run', '仅进行转换，不写入文件')
-
-program
+  
+  program
   .command('store')
+  .option('-X --no-only-template', '默认仅转换中文')
   .description('将本地项目里的翻译资源转换并存储到上游仓库中')
-  .action(() => {
-    const opts = program.opts();
+  .action((options) => {
+    const opts = Object.assign(program.opts(), options);
     const config = initConfig(opts);
     store(config, opts);
   });
