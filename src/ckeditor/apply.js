@@ -78,7 +78,7 @@ const apply = async (config, cmdOptions, plugins) => {
     const { locale, plugin, dstObj, dst } = item;
     item.srcObj = Object.keys(item.srcObj).reduce((accu, key) => {
       const value = item.srcObj[key];
-      accu[key] = (value && (value.oldValue || value.message)) || '';
+      accu[key] = value && value.message || '';
       return accu;
     }, {});
     const dstTemplatePath = Path.join(Path.dirname(dst[0]), localeMap.templates + '.js');

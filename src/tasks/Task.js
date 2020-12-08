@@ -376,13 +376,13 @@ class ApplyTask extends Task {
     if (srcType === properties) {
       srcObj = Object.keys(srcObj).reduce((accu, key) => {
         accu[key] = omit(srcObj[key], ['description', 'footnote']);
-        accu[key].message = accu[key].oldValue || accu[key].message || '';
+        accu[key].message = accu[key].message || '';
         return accu;
       }, {});
     } else {
       srcObj = Object.keys(srcObj).reduce((accu, key) => {
         const value = srcObj[key];
-        accu[key] = (value && (value.oldValue || value.message)) || '';
+        accu[key] = value && value.message || '';
         return accu;
       }, {});
     }

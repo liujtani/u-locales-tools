@@ -118,7 +118,7 @@ const store = async (config, cmdOptions, plugins) => {
     item.dstObj = Object.keys(srcObj).reduce((accu, key) => {
       if (!containChinese(srcObj[key])) {
         accu[key] = {
-          message: dstObj[key] && dstObj[key].oldValue === srcObj[key] ? dstObj[key].message : srcObj[key],
+          message: srcObj[key],
           description: dstObj[key] ? dstObj[key].description : 'ckeditor 插件'
         };
       }
