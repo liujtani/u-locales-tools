@@ -1,4 +1,4 @@
-const { stringify, parseLines, parse } = require('dot-properties');
+const { stringify, parseLines } = require('dot-properties');
 
 const unicode2Ascii = (str) => {
   let newStr = '';
@@ -30,15 +30,6 @@ exports.parseLines = (text) => {
       if (lastComments.length > 0) {
         const comment = lastComments.join('\n');
         item.description = comment;
-        lastComments.forEach((c) => {
-          c = c.trim();
-          c = c.replace(/^#\s*/, '');
-          const META = 'meta:';
-          if (c.startsWith(META)) {
-            const meta = parse(c.slice(META.length), false);
-            item = Object.assign(meta, item);
-          }
-        });
       }
       pairs = obj[line[0]] = item;
       lastComments = [];
@@ -66,11 +57,13 @@ exports.stringify = (obj, { unicode = false, doubleBackslash = false } = {}) => 
   for (let i = 0; i < keys.length; i++) {
     const key = keys[i];
     const value = obj[key];
-    if (value.description !== undefined) {
-      const desc = value.description.split('\n').map((it) => it.trim());
-      lines.push(...desc);
+    if (value.message !== undefined) {
+      if (value.description !== undefined) {
+        const desc = value.description.split('\n').map((it) => it.trim());
+        lines.push(...desc);
+      }
+      lines.push([key, value.message]);
     }
-    lines.push([key, !value.message && typeof value.message !== 'number' ? '' : value.message]);
     if (value.footnote) {
       footnote = value.footnote;
     }
