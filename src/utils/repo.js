@@ -4,8 +4,10 @@ const fsp = fs.promises;
 const { parse, parseLines } = require('dot-properties');
 const { json, properties } = require('../parse-tool');
 const { walk } = require('./extra');
+const { hasLocale } = require('../tasks/util');
 
-const getRepoRescourse = async (repoPath, hasComment = true) => {
+const getRepoRescourse = async (config, hasComment = true) => {
+  const { repoPath,  } = config;
   const filelist = [];
   await walk(repoPath, (path) => {
     const ext = Path.extname(path).slice(1);
@@ -20,6 +22,7 @@ const getRepoRescourse = async (repoPath, hasComment = true) => {
       const { ext, dir } = Path.parse(file);
       const type = ext.slice(1).toLowerCase();
       const locale = Path.basename(dir);
+      if (locale !== 'templates' && !hasLocale(locale, config)) return
       const text = await fsp.readFile(file, { encoding: 'utf-8' });
       let obj;
       if (type === json) {

@@ -43,7 +43,7 @@ const checkInterpolation = (source, target) => {
 
 const checkTranslation = async (config, options) => {
   const { output } = options;
-  const list = await getRepoRescourse(config.repoPath, false);
+  const list = await getRepoRescourse(config, false);
   const data = {
     unTranslatedFiles: [],
     unTranslatedKeys: {},
