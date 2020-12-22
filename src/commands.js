@@ -35,8 +35,10 @@ const exec = async (config, options, Task) => {
     for (let i = 0; i < tasks.length; i++) {
       const task = tasks[i];
       const count = await task.write();
-      console.log(chalk.green.bold(`${task.project}${task.name ? ':' + task.name : ''}`));
-      console.log(chalk.green(`转换完成：${count > 0 ? '更改了' + count + '个文件' : '没有文件发生更改'}\n`));
+      if (count > 0) {
+        console.log(chalk.green.bold(`${task.project}${task.name ? ':' + task.name : ''}`));
+        console.log(chalk.green(`转换完成：共转换了${count}个文件`));
+      }
     }
   }
 };
