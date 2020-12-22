@@ -3,7 +3,6 @@ const fs = require('fs');
 const fsp = fs.promises;
 const template = require('lodash/template');
 const merge = require('lodash/merge');
-const omit = require('lodash/omit');
 const pickBy = require('lodash/pickBy');
 const invert = require('lodash/invert');
 const assignWith = require('lodash/assignWith');
@@ -375,7 +374,7 @@ class ApplyTask extends Task {
 
     if (srcType === properties) {
       srcObj = Object.keys(srcObj).reduce((accu, key) => {
-        accu[key] = omit(srcObj[key], ['description', 'footnote']);
+        accu[key] = { message: srcObj[key].message };
         accu[key].message = accu[key].message || '';
         return accu;
       }, {});
