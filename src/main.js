@@ -51,9 +51,13 @@ program
   .command('ckeditor')
   .description('ckeditor 插件翻译转换')
   .option('-S --store', '将指定项目的ckeditor插件翻译同步到上游仓库')
+  .option('-X --no-only-template', '默认仅转换中文')
   .option('-A --apply', '将上游仓库的ckeditor插件翻译同步到本地')
   .option('--order <projects...>', '选择要同步的项目，默认顺序是 course_web，umooc_homework_front, ua_web，支持alias')
   .action((options) => {
+    if (options.apply && options.onlyTemplate) {
+      options.onlyTemplate = false;
+    }
     const opts = Object.assign(program.opts(), options);
     const config = initConfig(opts);
     ckeditor(config, opts);
