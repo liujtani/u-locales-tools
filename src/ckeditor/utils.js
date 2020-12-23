@@ -22,7 +22,7 @@ const logList = (list) => {
           .map((it, index) => (index > 0 ? ' '.repeat(prefix.length + 2 + srcMax + 4) + it : it))
           .join('\n')
       : item.dst.padEnd(dstMax, ' ');
-    console.log(`${chalk.green(prefix)} `, chalk.blue(src), '->', chalk.magenta(dst));
+    console.log(`${chalk.blue(prefix)} `, chalk.cyan(src), '->', chalk.yellow(dst));
     console.log('\n');
   }
   if (list.length === 0) {
