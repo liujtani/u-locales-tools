@@ -27,11 +27,12 @@ ut help store # 同上
 ut list # 列出当前可供转换的项目
 
 # store
-ut store # 将 本地项目 的翻译资源转换存储到上游仓库
-ut store -b # --templates 仅转换中文
+ut store # 将 本地项目 的翻译资源转换存储到上游仓库，默认仅转换中文
+ut store --no-only-template # 去掉默认仅转换中文的限制
 ut store -t course_web # 仅转换course_web 项目
 ut store -t cw # 支持配置别名
 ut store -t um1 um2 # 仅转换 ulearning_mobile_1.0 和 ulearning_mobile_2.0 项目
+ut sotre -t um1 um2 -n # --dry-run 仅转换，不写入到文件中
 
 # apply
 ut apply # 将 上游仓库 的翻译资源转换应用到本地，同时补全翻译
