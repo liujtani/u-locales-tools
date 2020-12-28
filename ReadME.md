@@ -1,7 +1,3 @@
-## changes
-
-- `ulearning_mobile_1.0` 的路径改变了，去掉了前面的 `1.0` 前缀
-
 ## 安装
 
 ```bash
@@ -29,26 +25,28 @@ ut list # 列出当前可供转换的项目
 # store
 ut store # 将 本地项目 的翻译资源转换存储到上游仓库，默认仅转换中文
 ut store --no-only-template # 去掉默认仅转换中文的限制
-ut store -t course_web # 仅转换course_web 项目
-ut store -t cw # 支持配置别名
-ut store -t um1 um2 # 仅转换 ulearning_mobile_1.0 和 ulearning_mobile_2.0 项目
-ut sotre -t um1 um2 -n # --dry-run 仅转换，不写入到文件中
+ut store course_web # 仅转换course_web 项目
+ut store cw # 支持配置别名
+ut store um1 um2 # 仅转换 ulearning_mobile_1.0 和 ulearning_mobile_2.0 项目
+ut sotre -n um1 um2 # --dry-run 仅转换，不写入到文件中
+ut sotre um1 -l # --list 列出要转换的文件列表
 
 # apply
 ut apply # 将 上游仓库 的翻译资源转换应用到本地，同时补全翻译
 ut apply --no-fill # 不进行补全
+ut apply cw # 指定任务
 
-# ckeditor
+# ckeditor ckeditor 是一个 多对一 和 一对多 的转换任务，跨越多个项目。不太适合于 ut store 和 ut apply。所以将其单独列出来。
 ut ckeditor -S # --store
 ut ckeditor -A # --apply
 ut ckeditor -A --no-fill # 不进行补全
 ut ckeditor -S --order uaw hw cw # 默认顺序是 cw hw uaw
 # 顺序对于转换的影响
-# 对于 --store，取指定项目顺序的第一个项目的文件，进行转换
-# 对于 --apply, 合并时，取指定项目顺序的第一个项目的文件，进行合并
+# 对于 --store，取指定顺序的第一个项目的文件，进行转换
+# 对于 --apply, 合并时，取指定顺序的第一个项目的文件作为模板，进行合并
 ```
 
-**关于locales 参数**： locales 参数以语言资源文件所在的仓库下的locales目录为准，作为特例，可以使用`zh`或`zh-cn`指代`templates`，使用`tw`指代`zh-TW`
+**关于 locales 参数**： locales 参数以上游仓库下的 locales 目录为准，作为特例，可以使用`zh`或`zh-cn`指代`templates`，使用`tw`指代`zh-TW`
 
 ## 添加自定义项目
 
@@ -56,13 +54,19 @@ ut ckeditor -S --order uaw hw cw # 默认顺序是 cw hw uaw
 module.exports = {
   name: 'activity1', // 项目名称，方便定位项目
   type: 'json', // 项目的文件类型，可选，如果没有指定，则从扩展名中取得
-  src: 'trunk/src/assets/language/:locale.json',
+  src: 'trunk/src/assets/language/:locale.json', // src 必须指定 locale，语法和 vue-router 的路由路径语法是一致的
   dst: '小组作业ch.json',
   localeMap: {
     templates: 'ch'
   },
-  desc: 'desc - {filename}' // {} 中的是插值。
+  desc: 'desc - {filename}' // {} 中的是插值，详见Task.js#getDesc
 };
+
+// src 是本地项目里的国际化文本资源
+// dst 是上游仓库里的国际化文本资源
+// 由 src 可以计算得出 dst，反之，也可以由 dst 计算得出 src。它们用了 path-to-regexp 这个库，和 vue-router 的路由语法是一致的。
+// dst 可以省略 :locale，如果省略，则自动添加 :locale/ 前缀
+// 以上面的文件为例，对于待转换的文件：trunk/src/assets/language/ch.json，将其转换为：templates/小组作业ch.json
 ```
 
 ## 配置
@@ -73,6 +77,14 @@ module.exports = {
 repo: "", # 上游仓库路径,
 baesPath: "", # 本地项目基础路径
 defaultBranch: "", # 默认分支，
-projects: {} # 项目具体配置
+projects: {
+  course_web: {
+    path: '', # 项目路径
+    alias: 'cw', # 别名
+    branch: '' # 覆盖默认分支
+  }
+} # 项目具体配置
+# 一个项目的最终路径，由 basePath + path(如果没有指定，则使用项目的名称) + branch(如果没有指定，则使用defaultBranch)
+excludeLocales: ['pt', 'ru'] # 排除的语言
+excludeTasks: ['smartClassroom'] # 排除的项目
 ```
-

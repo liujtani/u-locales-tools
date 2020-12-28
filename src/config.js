@@ -84,7 +84,7 @@ const normalize = (options) => {
   if (options.excludeTemplates) {
     config.excludeLocales.add('templates');
   }
-  config.includeTasks = config.includeTasks.concat(options.task || []);
+  config.includeTasks = config.includeTasks.concat(options.includeTasks || []);
   // config.excludeTasks = config.excludeTasks.concat(options.excludeTasks || [])
   fillConfigProjects(config);
   return config;
