@@ -46,7 +46,6 @@ program
   .command('list')
   .description('列出可用的任务名称及其别名')
   .action((tasks, options) => {
-    console.log(tasks)
     const { config, opts } = mergeConfig(options);
     list(config, opts);
   });
