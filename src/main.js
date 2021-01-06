@@ -23,6 +23,7 @@ program
   .option('-u --exclude-templates', '排除中文进行转换')
   .option('-l --list', '不进行转换，仅列出要转换的文件列表')
   .option('-n --dry-run', '仅进行转换，不写入文件中')
+  .option('-B --branch <branch>', '指定默认分支')
   .option('--no-fill', '禁止将未翻译的文本使用中文补全');
 
 program
