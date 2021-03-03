@@ -358,11 +358,27 @@ class ApplyTask extends Task {
     [this.srcBasePath, this.dstBasePath] = [this.dstBasePath, this.srcBasePath];
     [this.srcLocaleMap, this.dstLocaleMap] = [this.dstLocaleMap, this.srcLocaleMap];
 
-    if (typeof group.dst2 === 'function') {
-      this.dst2 = group.dst2(config);
-    } else if (typeof group.dst2 === 'string') {
-      this.dst2 = Path.posix.join(this.dstBasePath, group.dst2);
+    if (group.dst2 !== undefined && group.dst2 !== null) {
+      let dst2;
+      if (typeof group.dst2 === 'function') {
+        dst2 = group.dst2(config);
+      } else {
+        dst2 = group.dst2;
+      }
+      dst2 = Array.isArray(dst2) ? dst2 : [dst2];
+
+      if (!dst2.every((it) => typeof it === 'string')) {
+        log.error(`dst2: ${dst2}`);
+        process.exit(1);
+      }
+
+      if (typeof group.dst2 !== 'function') {
+        dst2 = dst2.map((it) => Path.posix.join(this.dstBasePath, it));
+      }
+
+      this.dst2 = dst2;
     }
+
     this.srcToDst = false;
   }
 
@@ -381,7 +397,7 @@ class ApplyTask extends Task {
     } else {
       srcObj = Object.keys(srcObj).reduce((accu, key) => {
         const value = srcObj[key];
-        accu[key] = value && value.message || '';
+        accu[key] = (value && value.message) || '';
         return accu;
       }, {});
     }
@@ -434,7 +450,7 @@ class ApplyTask extends Task {
 
   async write() {
     const count = await super.write();
-    if (this.dst2) {
+    if (this.dst2 && this.dst2.length) {
       await this.copyToDst2();
     }
     return count;
@@ -445,11 +461,14 @@ class ApplyTask extends Task {
     for (let i = 0; i < this.list.length; i++) {
       const item = this.list[i];
       const { dst } = item;
-      if (fs.existsSync(dst)) {
-        if (!fs.existsSync(dst2)) {
-          await fsp.mkdir(dst2, { recursive: true });
+      for (let j = 0; j < dst2.length; j++) {
+        const dstDir = dst2[j];
+        if (fs.existsSync(dstDir)) {
+          if (!fs.existsSync(dstDir)) {
+            await fsp.mkdir(dstDir, { recursive: true });
+          }
+          await fsp.copyFile(dst, Path.join(dstDir, Path.basename(dst)));
         }
-        await fsp.copyFile(dst, Path.join(dst2, Path.basename(dst)));
       }
     }
   }

@@ -114,7 +114,10 @@ const groups = [
       }
     },
     dst2(config) {
-      return Path.join(config.projects['umooc_homework_front'].basePath, 'ulearning/static/3rdlib/ckeditor/plugins/attachMathJax/locales');
+      return [
+        Path.join(config.projects['umooc_homework_front'].basePath, 'ulearning/static/3rdlib/ckeditor/plugins/attachMathJax/locales'),
+        Path.join(config.projects['ua_web'].basePath, 'src/components/testEditor/formula/locales')
+      ];
     }
   }
 ];
