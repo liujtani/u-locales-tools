@@ -48,6 +48,9 @@ const pickByTemplate = (obj, src) => {
     }
     return accu;
   };
+  if (typeof src !== 'object' || src === null) {
+    return obj;
+  }
   if (Array.isArray(obj)) {
     return obj.reduce(callback, []);
   } else {

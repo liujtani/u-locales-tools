@@ -302,6 +302,9 @@ class StoreTask extends Task {
       if (isNil(message)) return accu;
       if (!containChinese(message)) {
         accu[key] = dstObj[key] || {};
+        if (accu[key].message !== undefined && accu[key].message !== message) {
+          console.warn(chalk.yellow(`warn: ${this.project}#${key} - 不要仅修改key对应的字串，key本身也需要修改`));
+        }
         accu[key].message = message;
         if (description && accu[key].description === undefined) {
           accu[key].description = description;
@@ -310,16 +313,19 @@ class StoreTask extends Task {
       return accu;
     };
 
+    let dstObject
     if (srcType === properties) {
-      item.dstObj = Object.keys(srcObj).reduce((accu, key) => {
+      dstObject = Object.keys(srcObj).reduce((accu, key) => {
         return convert(accu, key, srcObj[key].message, srcObj[key].description);
       }, {});
     } else {
       const desc = this.getDesc(src);
-      item.dstObj = Object.keys(srcObj).reduce((accu, key) => {
+      dstObject = Object.keys(srcObj).reduce((accu, key) => {
         return convert(accu, key, srcObj[key], desc);
       }, {});
     }
+
+    item.dstObj = merge(dstObject, dstObj);
     // if (!this.cmdOptions.override) {
     //   item.dstObj = Object.assign(dstObj, item.dstObj)
     // }
@@ -400,6 +406,10 @@ class ApplyTask extends Task {
         accu[key] = (value && value.message) || '';
         return accu;
       }, {});
+    }
+
+    if (locale === 'templates') {
+      srcObj = Task.pickByTemplate(srcObj, dstObj || {}, srcType);
     }
 
     if (dstType !== properties) {
