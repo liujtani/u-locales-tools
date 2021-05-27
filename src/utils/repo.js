@@ -7,9 +7,9 @@ const { walk } = require('./extra');
 const { hasLocale } = require('../tasks/util');
 
 const getRepoRescourse = async (config, hasComment = true) => {
-  const { repoPath,  } = config;
+  const { repo  } = config;
   const filelist = [];
-  await walk(repoPath, (path) => {
+  await walk(repo, (path) => {
     const ext = Path.extname(path).slice(1);
     // 目前还不支持其他格式的文件
     if (ext === json || ext === properties) {
@@ -45,4 +45,10 @@ const getRepoRescourse = async (config, hasComment = true) => {
   return list;
 };
 
+const getProjectPath = (config, projectName) => {
+  const opts = config.projects[projectName] || {}
+  return Path.join(config.basePath, opts.path || projectName, opts.branch || config.defaultBranch)
+}
+
 module.exports.getRepoRescourse = getRepoRescourse;
+module.exports.getProjectPath = getProjectPath

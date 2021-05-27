@@ -11,14 +11,31 @@ const cloneDeep = require('lodash/cloneDeep');
 const { serial, deserial } = require('../utils/serial');
 const { parse, stringify, properties } = require('../parse-tool');
 
-const { walk, pickByTemplate, hasChinese, setBykeys, pickByKeys } = require('../utils/extra');
+const { walk, pickBySource, hasChinese, setBykeys, pickByKeys } = require('../utils/extra');
 const ptr = require('../utils/ptr');
 const { write, hasLocale } = require('./util');
 const log = require('../utils/log');
 const chalk = require('chalk');
 
+const pickByTemplate = (obj, src, type) => {
+  if (obj === src) return obj;
+  let object;
+  if (type === properties) {
+    object = pickBy(obj, (v, k) => src[k] !== undefined);
+  } else {
+    object = pickBySource(obj, src);
+  }
+  const newObject = {};
+  Object.keys(src).forEach((key) => {
+    if (object[key] !== undefined) {
+      newObject[key] = object[key];
+    }
+  });
+  return Object.assign(newObject, object);
+};
+
 class Task {
-  constructor(group, config, cmdOptions) {
+  constructor(group, project, config) {
     if (new.target === Task) {
       throw new Error('');
     }
@@ -28,14 +45,14 @@ class Task {
     };
 
     this.config = config;
-    this.cmdOptions = cmdOptions;
-    this.project = group.project;
+
+    this.project = project.name;
+    this.srcBasePath = project.basePath;
+
     this.name = group.name;
-    const basePath = config.projects[this.project].basePath;
-    this.srcBasePath = basePath;
     this.src = group.src.replace(/\\/g, '/');
     const pattern = group.src.match(/:locale(\([\s\S]*\))?\?/) ? ':locale?' : ':locale';
-    this.dstBasePath = config.repoPath;
+    this.dstBasePath = config.repo;
     this.dst = Path.join(pattern, group.dst).replace(/\\/g, '/');
     this.dstLocaleMap = Object.assign(defaultLocaleMap, group.localeMap);
     this.srcLocaleMap = invert(this.dstLocaleMap);
@@ -60,25 +77,6 @@ class Task {
     this.written = hooks.written;
 
     this.srcToDst = true;
-    // this.doubleBackslash = group.doubleBackslash; // properties 文件才需要这个属性
-    // this.check();
-  }
-
-  static pickByTemplate(obj, src, type) {
-    if (obj === src) return obj;
-    let object;
-    if (type === properties) {
-      object = pickBy(obj, (v, k) => src[k] !== undefined);
-    } else {
-      object = pickByTemplate(obj, src);
-    }
-    const newObject = {};
-    Object.keys(src).forEach((key) => {
-      if (object[key] !== undefined) {
-        newObject[key] = object[key];
-      }
-    });
-    return Object.assign(newObject, object);
   }
 
   check() {
@@ -133,7 +131,7 @@ class Task {
     this.beforeLoad && this.beforeLoad(this);
     this.list = await this.load();
     this.loaded && this.loaded(this);
-    if (this.cmdOptions.list) {
+    if (this.config.list) {
       log.list(this.list.filter((it) => !it.hidden));
       return 0;
     }
@@ -157,10 +155,6 @@ class Task {
     const { src, dst, srcLocaleMap } = this;
     const config = this.config;
     const basePath = this.srcPrefixPath;
-    // if (!fs.existsSync(basePath)) {
-    //   log.error(`error: ${basePath} 路径不存在`);
-    //   process.exit(1);
-    // }
     const list = [];
     await walk(basePath, (srcFile) => {
       const matchFn = ptr.match(src);
@@ -267,9 +261,9 @@ class Task {
 }
 
 class StoreTask extends Task {
-  constructor(group, config, cmdOptions) {
+  constructor(group, project, config) {
     group.hooks = group.srcHooks;
-    super(group, config, cmdOptions);
+    super(group, project, config);
     // this.mergeLocal = group.mergeLocal || false; // 是否需要参考本地文件的格式生成文件
     this.desc = group.desc;
   }
@@ -281,7 +275,7 @@ class StoreTask extends Task {
     const srcTemplateObj = this.getSrcObj(src);
     item.srcTemplateObj = srcTemplateObj;
     if (srcTemplateObj) {
-      srcObj = Task.pickByTemplate(srcObj, srcTemplateObj, srcType);
+      srcObj = pickByTemplate(srcObj, srcTemplateObj, srcType);
     }
 
     this.omitKeys.forEach((keys) => {
@@ -292,7 +286,7 @@ class StoreTask extends Task {
       srcObj = serial(srcObj);
     }
 
-    const filled = this.cmdOptions.fill && this.fillTranslation && locale !== 'templates' && locale !== 'zh-TW';
+    const filled = this.config.fill && this.fillTranslation && locale !== 'templates' && locale !== 'zh-TW';
 
     const containChinese = (message) => {
       return filled && hasChinese(message);
@@ -313,7 +307,7 @@ class StoreTask extends Task {
       return accu;
     };
 
-    let dstObject
+    let dstObject;
     if (srcType === properties) {
       dstObject = Object.keys(srcObj).reduce((accu, key) => {
         return convert(accu, key, srcObj[key].message, srcObj[key].description);
@@ -326,7 +320,7 @@ class StoreTask extends Task {
     }
 
     item.dstObj = merge(dstObject, dstObj);
-    // if (!this.cmdOptions.override) {
+    // if (!this.config.override) {
     //   item.dstObj = Object.assign(dstObj, item.dstObj)
     // }
   }
@@ -355,9 +349,9 @@ class StoreTask extends Task {
   }
 }
 class ApplyTask extends Task {
-  constructor(group, config, cmdOptions) {
+  constructor(group, project, config) {
     group.hooks = group.dstHooks;
-    super(group, config, cmdOptions);
+    super(group, project, config);
     this.direction = false;
     [this.srcType, this.dstType] = [this.dstType, this.srcType];
     [this.src, this.dst] = [this.dst, this.src];
@@ -409,7 +403,7 @@ class ApplyTask extends Task {
     }
 
     if (locale === 'templates') {
-      srcObj = Task.pickByTemplate(srcObj, dstObj || {}, srcType);
+      srcObj = pickByTemplate(srcObj, dstObj || {}, srcType);
     }
 
     if (dstType !== properties) {
@@ -436,10 +430,10 @@ class ApplyTask extends Task {
       this.omitKeys.forEach((keys) => {
         setBykeys(dstTemplateObj, keys, undefined);
       });
-      srcObj = Task.pickByTemplate(srcObj, dstTemplateObj, srcType);
+      srcObj = pickByTemplate(srcObj, dstTemplateObj, srcType);
       srcObj = merge(srcObj, omitObj);
 
-      if (this.fillTranslation && this.cmdOptions.fill) {
+      if (this.fillTranslation && this.config.fill) {
         if (srcType === properties) {
           srcObj = assignWith(dstTemplateObj, srcObj, (objValue, srcValue) => {
             const { message, description } = srcValue;

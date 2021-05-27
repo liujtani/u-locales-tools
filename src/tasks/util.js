@@ -4,8 +4,8 @@ const fsp = fs.promises;
 
 const hasLocale = (locale, config) => {
   const { locales, excludeLocales } = config;
-  if (excludeLocales && excludeLocales.has(locale)) return false;
-  if (locales && locales.size > 0 && !config.locales.has(locale)) return false;
+  if (excludeLocales.indexOf(locale) > -1) return false;
+  if (locales.length > 0 && locales.indexOf(locale) < 0) return false;
   return true;
 };
 

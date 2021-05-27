@@ -34,7 +34,7 @@ const load = async (config, plugins) => {
         list.push({
           locale,
           src: Path.join(fullPath, file),
-          dst: Path.join(config.repoPath, locale, 'ckeditor.json'),
+          dst: Path.join(config.repo, locale, 'ckeditor.json'),
           srcType: ckeditor,
           dstType: json,
           plugin: pluginName,
@@ -87,7 +87,7 @@ const contact = (list) => {
   return newList;
 };
 
-const store = async (config, cmdOptions, plugins) => {
+const store = async (config, plugins) => {
   const list = await load(config, plugins);
 
   for (let i = 0; i < list.length; i++) {
@@ -97,7 +97,7 @@ const store = async (config, cmdOptions, plugins) => {
 
   const newList = contact(list);
   sort(newList);
-  if (cmdOptions.list) {
+  if (config.list) {
     logList(newList.filter((it) => !it.hidden));
     return;
   }
@@ -109,13 +109,13 @@ const store = async (config, cmdOptions, plugins) => {
     const containChinese = (message) => {
       return locale !== 'templates' && locale !== 'zh-TW' && hasChinese(message);
     };
-    const path = Path.join(config.repoPath, 'templates', 'ckeditor.json');
+    const path = Path.join(config.repo, 'templates', 'ckeditor.json');
     const srcTemplateObj = newList.find((it) => it.dst === path);
     if (srcTemplateObj) {
       item.srcObj = pickBy(item.srcObj, (_, k) => srcTemplateObj.srcObj[k]);
     }
     const srcObj = item.srcObj;
-    item.dstObj = Object.keys(srcObj).reduce((accu, key) => {
+    const obj = Object.keys(srcObj).reduce((accu, key) => {
       if (!containChinese(srcObj[key])) {
         accu[key] = {
           message: srcObj[key],
@@ -124,9 +124,10 @@ const store = async (config, cmdOptions, plugins) => {
       }
       return accu;
     }, {});
+    item.dstObj = Object.assign(dstObj, obj)
     item.text = stringify(item.dstObj, { type: dstType, path: dst });
   }
-  if (cmdOptions.dryRun) return;
+  if (config.dryRun) return;
   let count = 0;
   for (let i = 0; i < newList.length; i++) {
     const item = newList[i];

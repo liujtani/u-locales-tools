@@ -6,14 +6,13 @@ const umoocView = require('../projects/umooc-view');
 const { walk } = require('../utils/extra');
 const { properties } = require('../parse-tool/types');
 const { getBasePath, match } = require('../utils/ptr');
+const { getProjectPath } = require('../utils/repo');
 
 module.exports.checkProperties = async (config, options) => {
-  const { projects } = config;
   const { output } = options;
   const group = umoocView.groups.find((it) => it.name === 'properties');
-  const basePath = projects['umooc-view'].basePath;
-  const pattern = Path.join(basePath, group.src);
-  const path = getBasePath(pattern.replace(/\\/g, '/'));
+  const basePath = getProjectPath(config, 'umooc-view');
+  const path = Path.join(basePath, getBasePath(group.src.replace(/\\/g, '/')));
   const files = [];
   const matchFn = match(group.src);
   await walk(path, (file) => {

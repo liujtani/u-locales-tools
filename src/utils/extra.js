@@ -35,11 +35,11 @@ const walk = async (path, callback = () => {}) => {
   }
 };
 
-const pickByTemplate = (obj, src) => {
+const pickBySource = (obj, src) => {
   const callback = (accu, value, key) => {
     if (src[key] === undefined) return accu;
     if (typeof value === 'object' && value !== null && typeof src[key] === 'object' && src[key] !== null) {
-      const object = pickByTemplate(value, src[key]);
+      const object = pickBySource(value, src[key]);
       if (Object.keys(object).length > 0) {
         accu[key] = object;
       }
@@ -110,6 +110,6 @@ const pickByKeys = (obj, keys) => {
 
 module.exports.hasChinese = hasChinese;
 module.exports.walk = walk;
-module.exports.pickByTemplate = pickByTemplate;
+module.exports.pickBySource = pickBySource;
 module.exports.setBykeys = setByKeys;
 module.exports.pickByKeys = pickByKeys;

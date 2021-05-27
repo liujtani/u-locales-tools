@@ -8,22 +8,22 @@ const { deserial } = require('../utils/serial');
 const { write, hasLocale } = require('../tasks/util');
 const chalk = require('chalk');
 const { logList, localeMap, sort } = require('./utils');
-const { pickByTemplate } = require('../utils/extra');
+const { pickBySource } = require('../utils/extra');
 
 const load = async (config) => {
-  const { repoPath } = config;
+  const { repo } = config;
   const list = [];
-  const dirs = (await fsp.readdir(repoPath, { withFileTypes: true })).filter((it) => it.isDirectory()).map((it) => it.name);
+  const dirs = (await fsp.readdir(repo, { withFileTypes: true })).filter((it) => it.isDirectory()).map((it) => it.name);
   for (let i = 0; i < dirs.length; i++) {
     const locale = dirs[i];
     let hidden = locale === 'templates';
     if (hidden || hasLocale(locale, config)) {
       hidden = hidden && !hasLocale(locale, config);
-      const files = (await fsp.readdir(Path.join(repoPath, locale), { withFileTypes: true }))
+      const files = (await fsp.readdir(Path.join(repo, locale), { withFileTypes: true }))
         .filter((it) => (it.isFile() || it.isSymbolicLink()) && it.name === 'ckeditor.json')
         .map((it) => it.name);
       files.forEach((file) => {
-        list.push({ src: Path.join(repoPath, locale, file), locale, srcType: json, hidden });
+        list.push({ src: Path.join(repo, locale, file), locale, srcType: json, hidden });
       });
     }
   }
@@ -47,20 +47,22 @@ const read = async (item, plugins) => {
   });
   await Promise.all(
     Object.keys(newObj).map(async (pluginName) => {
-      const newItem = { ...item, plugin: pluginName, srcObj: newObj[pluginName], dstType: ckeditor };
-      newItem.dst = plugins[pluginName].map((it) => Path.join(it.path, pluginName, 'lang', filename));
-      const index = newItem.dst.findIndex((it) => fs.existsSync(it));
-      if (index > -1) {
-        const text = await fsp.readFile(newItem.dst[index], { encoding: 'utf-8' });
-        newItem.dstObj = parse(text, { type: newItem.dstType, path: newItem.dst[index] }).message
+      if (plugins[pluginName]) {
+        const newItem = { ...item, plugin: pluginName, srcObj: newObj[pluginName], dstType: ckeditor };
+        newItem.dst = plugins[pluginName].map((it) => Path.join(it.path, pluginName, 'lang', filename));
+        const index = newItem.dst.findIndex((it) => fs.existsSync(it));
+        if (index > -1) {
+          const text = await fsp.readFile(newItem.dst[index], { encoding: 'utf-8' });
+          newItem.dstObj = parse(text, { type: newItem.dstType, path: newItem.dst[index] }).message
+        }
+        list.push(newItem);
       }
-      list.push(newItem);
     })
   );
   return list;
 };
 
-const apply = async (config, cmdOptions, plugins) => {
+const apply = async (config, plugins) => {
   const list = await load(config);
   const newList = [];
   for (let i = 0; i < list.length; i++) {
@@ -69,7 +71,7 @@ const apply = async (config, cmdOptions, plugins) => {
     newList.push(...groups);
   }
   sort(newList);
-  if (cmdOptions.list) {
+  if (config.list) {
     logList(newList.filter((it) => !it.hidden));
     return;
   }
@@ -97,8 +99,8 @@ const apply = async (config, cmdOptions, plugins) => {
       }
   
       if (dstTemplateObj) {
-        item.srcObj = pickByTemplate(item.srcObj, dstTemplateObj);
-        if (cmdOptions.fill) {
+        item.srcObj = pickBySource(item.srcObj, dstTemplateObj);
+        if (config.fill) {
           item.srcObj = merge(cloneDeep(dstTemplateObj), item.srcObj);
         }
       }
@@ -111,7 +113,7 @@ const apply = async (config, cmdOptions, plugins) => {
     const srcLocale = localeMap[locale] || locale;
     item._obj = { message: item.srcObj, id: plugin, locale: srcLocale };
   }
-  if (cmdOptions.dryRun) return;
+  if (config.dryRun) return;
   let count = 0;
   for (let i = 0; i < newList.length; i++) {
     const item = newList[i];

@@ -36,30 +36,28 @@ ut apply # 将 上游仓库 的翻译资源转换应用到本地，同时补全�
 ut apply --no-fill # 不进行补全
 ut apply cw # 指定任务
 
-# ckeditor ckeditor 是一个 多对一 和 一对多 的转换任务，跨越多个项目。不太适合于 ut store 和 ut apply。所以将其单独列出来。
-ut ckeditor -S # --store
-ut ckeditor -A # --apply
-ut ckeditor -A --no-fill # 不进行补全
-ut ckeditor -S --order uaw hw cw # 默认顺序是 cw hw uaw
-# 顺序对于转换的影响
-# 对于 --store，取指定顺序的第一个项目的文件，进行转换
-# 对于 --apply, 合并时，取指定顺序的第一个项目的文件作为模板，进行合并
+# 指定语言
+ut store -o zh tw # 仅转换简体中文和繁体中文
+ut store -u zh # 排除简体中文
 ```
 
-**关于 locales 参数**： locales 参数以上游仓库下的 locales 目录为准，作为特例，可以使用`zh`或`zh-cn`指代`templates`，使用`tw`指代`zh-TW`
+**关于 locales 参数**： locales 参数以上游仓库下的 locales 目录为准，作为特例，可以使用 `zh` 或 `zh-cn` 指代 `templates`，使用 `tw` 指代 `zh-TW`
 
 ## 添加自定义项目
 
 ```js
 module.exports = {
   name: 'activity1', // 项目名称，方便定位项目
-  type: 'json', // 项目的文件类型，可选，如果没有指定，则从扩展名中取得
-  src: 'trunk/src/assets/language/:locale.json', // src 必须指定 locale，语法和 vue-router 的路由路径语法是一致的
-  dst: '小组作业ch.json',
-  localeMap: {
-    templates: 'ch'
-  },
-  desc: 'desc - {filename}' // {} 中的是插值，详见Task.js#getDesc
+  groups: [ // 一个项目可能具有多组不同的语言配置，例如，course_web 项目下的 nls/ 目录下的语言资源和 screen 子项目的语言资源
+    {
+      type: 'json', // 项目语言资源的文本格式，如果指定，从扩展名中取得
+      src: '', // 语言资源的相对路径，src 必须指定 locale，语法和 vue-router 的路由路径语法是一致的
+      dst: '', // 对应仓库里的资源文件的相对路径
+      localeMap: {
+      templates: 'ch'
+      desc: 'desc - {filename}'
+    }
+  ]
 };
 
 // src 是本地项目里的国际化文本资源

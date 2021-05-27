@@ -2,6 +2,7 @@ const { datepicker, kindeditor } = require('../parse-tool');
 const cloneDeep = require('lodash/cloneDeep');
 const Path = require('path');
 const log = require('../utils/log');
+const { getProjectPath } = require('../utils/repo');
 
 let _templateObj;
 
@@ -115,8 +116,8 @@ const groups = [
     },
     dst2(config) {
       return [
-        Path.join(config.projects['umooc_homework_front'].basePath, 'ulearning/static/3rdlib/ckeditor/plugins/attachMathJax/locales'),
-        Path.join(config.projects['ua_web'].basePath, 'src/components/testEditor/formula/locales')
+        Path.join(getProjectPath(config, 'umooc_homework_front'), 'ulearning/static/3rdlib/ckeditor/plugins/attachMathJax/locales'),
+        Path.join(getProjectPath(config, 'ua_web'), 'src/components/testEditor/formula/locales')
       ];
     }
   }

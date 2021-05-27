@@ -41,18 +41,19 @@ const COURSE_WEB = 'course_web';
 const HOMEWORK = 'umooc_homework_front';
 const UA_WEB = 'ua_web';
 
-const getPlugins = (config) => {
-  const { projects } = config;
-  const courseWeb = { project: COURSE_WEB, path: 'www/common/vendor' };
-  const homework = { project: HOMEWORK, path: 'ulearning/static/3rdlib' };
-  const uaWeb = { project: UA_WEB, path: 'src/common/lib' };
-  const defaultProjects = [courseWeb, homework, uaWeb];
-  defaultProjects.forEach((it) => {
-    const { project, path } = it;
-    it.path = Path.join(projects[project].basePath, path, 'ckeditor/plugins');
-  });
+const getPlugins = (projects) => {
+  const getPath = (name, suffix) => {
+    const index = projects.findIndex((project) => project.name === name);
+    if (index > -1) {
+      return { project: name, path: Path.join(projects[index].basePath, suffix, 'ckeditor/plugins') };
+    }
+    return null;
+  };
+  const courseWeb = getPath(COURSE_WEB, 'www/common/vendor');
+  const homework = getPath(HOMEWORK, 'ulearning/static/3rdlib');
+  const uaWeb = getPath(UA_WEB, 'src/common/lib');
 
-  return {
+  const plugins = {
     attachMathJax: [homework],
     imageUploader: [courseWeb, homework],
     simplelink: [courseWeb, homework, uaWeb],
@@ -60,6 +61,17 @@ const getPlugins = (config) => {
     addNotes: [uaWeb],
     embedHtml: [uaWeb]
   };
+
+  const list = {};
+
+  Object.keys(plugins).forEach((key) => {
+    const projects = plugins[key].filter(it => it);
+    if (projects.length > 0) {
+      list[key] = projects;
+    }
+  });
+
+  return list;
 };
 
 const sort = (list) => {
