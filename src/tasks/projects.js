@@ -5,6 +5,7 @@ const umoocView = require('../projects/umooc-view'); // umooc-view
 const umoocStatic = require('../projects/umooc-static'); // umooc-static
 const umoocWeb = require('../projects/umooc-web'); // umooc-web
 const smartClassroom = require('../projects/smart-classroom'); // smart-classroom
+const smartClassroomAdmin = require('../projects/smart-classroom-admin') // smart-classroom-admin
 
 // mobile
 const activity1 = require('../projects/activity-1.0');
@@ -23,6 +24,7 @@ module.exports = [
   umoocView,
   umoocWeb,
   smartClassroom,
+  smartClassroomAdmin,
   activity1,
   activity2,
   discussion,

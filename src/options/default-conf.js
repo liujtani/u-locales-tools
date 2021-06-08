@@ -40,6 +40,9 @@ module.exports = {
     },
     'smart-classroom': {
       alias: 'sc'
+    },
+    'smart_classroom_admin': {
+      alias: 'sca'
     }
   },
   excludeLocales: ['pt', 'ru', 'fr', 'ug'],
