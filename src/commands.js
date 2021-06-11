@@ -32,7 +32,7 @@ const exec = async (config, projects, Task) => {
 
   for (let i = 0; i < taskList.length; i++) {
     const item = taskList[i];
-    console.log(`正在转换 ${item.name} 项目的翻译文本文件...`);
+    console.log(`正在转换 ${chalk.red.bold(item.name)} 项目的翻译文本文件...`);
     for (let i = 0; i < item.groups.length; i++) {
       const group = item.groups[i];
       await group.start();
@@ -42,19 +42,19 @@ const exec = async (config, projects, Task) => {
         const group = item.groups[i];
         const count = await group.write();
         if (count > 0) {
-          console.log(chalk.green.bold(`${item.name}${group.name ? ':' + group.name : ''}`));
-          console.log(chalk.green(`转换完成：共转换了${count}个文件`));
+          console.log(chalk.green.bold(`${item.name}${group.name ? ':' + group.name : ''}, 转换完成：共转换了${count}个文件`));
         }
       }
     }
   }
+  console.log() // 换行
 };
 
 module.exports.store = async (config) => {
   const projects = getProjects(config);
   await exec(config, projects, StoreTask);
   if (!config.excludeCkeditor) {
-    console.log(`正在转换 ckeditor 插件翻译文本 ...`)
+    console.log(`正在转换 ${chalk.red.bold('ckeditor')} 插件翻译文本 ...`)
     await store(config, projects);
   }
 };
@@ -63,7 +63,7 @@ module.exports.apply = async (config) => {
   const projects = getProjects(config);
   await exec(config, projects, ApplyTask);
   if (!config.excludeCkeditor) {
-    console.log(`正在转换 ckeditor 插件翻译文本 ...`)
+    console.log(`正在转换 ${chalk.red.bold('ckeditor')} 插件翻译文本 ...`)
     await apply(config, projects);
   }
 };
