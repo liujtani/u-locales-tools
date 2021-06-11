@@ -42,7 +42,7 @@ const exec = async (config, projects, Task) => {
         const group = item.groups[i];
         const count = await group.write();
         if (count > 0) {
-          console.log(chalk.green.bold(`${item.name}${group.name ? ':' + group.name : ''}, 转换完成：共转换了${count}个文件`));
+          console.log(chalk.green.bold(`${item.name}${group.name ? ':' + group.name : ''} 转换完成：共转换了${count}个文件`));
         }
       }
     }
