@@ -47,7 +47,7 @@ const getRepoRescourse = async (config, hasComment = true) => {
 
 const getProjectPath = (config, projectName) => {
   const opts = config.projects[projectName] || {}
-  return Path.join(config.basePath, opts.path || projectName, opts.branch || config.defaultBranch)
+  return Path.join(config.basePath, typeof opts.path === 'string' ? opts.path : projectName, typeof opts.branch === 'string' ? opts.branch : (config.defaultBranch || ''))
 }
 
 module.exports.getRepoRescourse = getRepoRescourse;
