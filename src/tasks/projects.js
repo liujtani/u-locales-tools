@@ -17,6 +17,9 @@ const umoocMobile = require('../projects/umooc-mobile');
 // PC & mobile
 const homework = require('../projects/homework');
 
+// zambia 项目
+const zambiaAdmin = require('../projects/zambia-admin')
+
 module.exports = [
   courseWeb,
   uaWeb,
@@ -30,5 +33,6 @@ module.exports = [
   discussion,
   exam,
   umoocMobile,
-  homework
+  homework,
+  zambiaAdmin
 ];

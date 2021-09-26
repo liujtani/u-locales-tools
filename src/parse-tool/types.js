@@ -5,3 +5,4 @@ exports.properties = 'properties';
 exports.kindeditor = 'kindeditor';
 exports.datepicker = 'datepicker';
 exports.ckeditor = 'ckeditor';
+exports.esModule = 'es-module';

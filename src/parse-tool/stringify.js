@@ -1,5 +1,5 @@
 const Path = require('path');
-const { json, seajs, requirejs, properties, kindeditor, ckeditor, datepicker } = require('./types');
+const { json, seajs, requirejs, properties, kindeditor, ckeditor, datepicker, esModule } = require('./types');
 const { stringify } = require('./properties');
 const { format } = require('./format');
 const log = require('../utils/log');
@@ -36,6 +36,8 @@ const stringify2 = (obj, options) => {
       return stringify(obj, options);
     case ckeditor:
       return format(`CKEDITOR.plugins.setLang('${obj.id}', '${obj.locale}', ${JSON.stringify(obj.message)})`);
+    case esModule:
+      return format(`export default ${JSON.stringify(obj, null, 2)}`);
     default:
       throw new Error('未知的type：' + type);
   }

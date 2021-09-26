@@ -43,6 +43,9 @@ module.exports = {
     },
     'smart_classroom_admin': {
       alias: 'sca'
+    },
+    'zambia-admin': {
+      alias: 'za'
     }
   },
   excludeLocales: ['pt', 'ru', 'fr', 'ug'],

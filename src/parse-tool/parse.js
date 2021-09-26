@@ -1,6 +1,6 @@
 const vm = require('vm');
 
-const { json, seajs, requirejs, properties, kindeditor, ckeditor, datepicker } = require('./types');
+const { json, seajs, requirejs, properties, kindeditor, ckeditor, datepicker, esModule } = require('./types');
 const { parseLines } = require('./properties');
 const chalk = require('chalk');
 const log = require('../utils/log');
@@ -67,6 +67,13 @@ const parse = (text, options) => {
     case ckeditor:
       const ckeditorScript = new vm.Script(text);
       return ckeditorScript.runInNewContext(ckeditorContext);
+    case esModule: // 注意：esModule 格式仅支持 export default {} 这种简单的格式
+    {
+      const context = {};
+      const script = new vm.Script(`globalVar = ${text.replace('export default', '')}`);
+      script.runInNewContext(context);
+      return context.globalVar;
+    }
     default:
       throw new Error('未知的type：' + type);
   }
