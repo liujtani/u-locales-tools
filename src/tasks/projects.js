@@ -20,6 +20,9 @@ const homework = require('../projects/homework');
 // zambia 项目
 const zambiaAdmin = require('../projects/zambia-admin')
 
+// exam_web 项目
+const examWeb = require('../projects/exam_web')
+
 module.exports = [
   courseWeb,
   uaWeb,
@@ -34,5 +37,6 @@ module.exports = [
   exam,
   umoocMobile,
   homework,
-  zambiaAdmin
+  zambiaAdmin,
+  examWeb
 ];

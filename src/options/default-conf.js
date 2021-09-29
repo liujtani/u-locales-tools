@@ -46,6 +46,9 @@ module.exports = {
     },
     'zambia-admin': {
       alias: 'za'
+    },
+    'exam_web': {
+      alias: 'exw'
     }
   },
   excludeLocales: ['pt', 'ru', 'fr', 'ug'],
