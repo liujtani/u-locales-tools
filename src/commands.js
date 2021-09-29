@@ -54,7 +54,6 @@ module.exports.store = async (config) => {
   const projects = getProjects(config);
   await exec(config, projects, StoreTask);
   if (!config.excludeCkeditor) {
-    console.log(`正在转换 ${chalk.red.bold('ckeditor')} 插件翻译文本 ...`)
     await store(config, projects);
   }
 };
@@ -63,7 +62,6 @@ module.exports.apply = async (config) => {
   const projects = getProjects(config);
   await exec(config, projects, ApplyTask);
   if (!config.excludeCkeditor) {
-    console.log(`正在转换 ${chalk.red.bold('ckeditor')} 插件翻译文本 ...`)
     await apply(config, projects);
   }
 };
