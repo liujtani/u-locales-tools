@@ -49,6 +49,9 @@ module.exports = {
     },
     'exam_web': {
       alias: 'exw'
+    },
+    discussion2: {
+      alias: 'ds2'
     }
   },
   excludeLocales: ['pt', 'ru', 'fr', 'ug'],
