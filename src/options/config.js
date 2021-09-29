@@ -37,7 +37,7 @@ const getConfig = (globalOptions, tasks) => {
   let data;
   let path = globalOptions.config;
   if (path) {
-    data = yaml.parse(fs.readFileSync(path));
+    data = yaml.parse(fs.readFileSync(path, { encoding: 'utf-8'} ));
   } else {
     path = Path.join(os.homedir(), '.ut.yaml');
     if (fs.existsSync(path)) {
