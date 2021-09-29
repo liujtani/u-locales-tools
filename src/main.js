@@ -8,7 +8,7 @@ program.version('0.1.0');
 program
   .name('ut')
   .description('ulearning 翻译转换工具')
-  .option('-c --config [path]', '使用指定的配置，默认为~/.ut.json')
+  .option('-c --config [path]', '使用指定的配置，默认为~/.ut.yaml')
   .option('-o --locales <locales...>', '仅转换指定的语言，默认store子命令仅转换中文，apply子命令转换全部语言')
   .option('-b --only-template', '仅转换中文，等同于 --locales=zh')
   .option('-e --exclude-locales <locales...>', '指定要排除的语言')
