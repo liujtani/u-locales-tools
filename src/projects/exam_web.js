@@ -4,7 +4,7 @@ module.exports = {
     {
       src: 'src/lang/:locale.json',
       dst: 'exam_web.json',
-      desc: '',
+      desc: '考试快捷地址',
       omitKeys: [['_name'], ['lang'], ['langCss']]
     }
   ]
