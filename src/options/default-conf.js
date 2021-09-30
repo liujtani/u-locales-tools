@@ -55,6 +55,5 @@ module.exports = {
     }
   },
   excludeLocales: ['pt', 'ru', 'fr', 'ug'],
-  excludeTasks: ['smart-classroom'],
   excludeCkeditor: false // 是否排除ckeditor
 };

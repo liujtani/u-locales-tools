@@ -4,6 +4,7 @@ const fs = require('fs');
 const Joi = require('joi');
 const yaml = require('yaml');
 const { mergeWith } = require('lodash');
+const defaultConf = require('./default-conf');
 
 const localeMap = {
   zh: 'templates',
@@ -18,12 +19,20 @@ const normalizeLocales = (locales) => {
   });
 };
 
+const mergeDefaultConf = (config) => {
+  return mergeWith(defaultConf, config, (targetValue, srcValue) => {
+    if (Array.isArray(targetValue)) {
+      return srcValue
+    }
+  })
+}
+
 let config;
 
 const schema = Joi.object({
   repo: Joi.string().default(''),
   basePath: Joi.string().default(''),
-  defaultBranch: Joi.string().default(''),
+  defaultBranch: Joi.string().allow('').optional().default(''),
   includeTasks: Joi.array().items(Joi.string()).default([]),
   excludeTasks: Joi.array().items(Joi.string()).default([]),
   locales: Joi.array().items(Joi.string()).default([]),
@@ -38,10 +47,12 @@ const getConfig = (globalOptions, tasks) => {
   let path = globalOptions.config;
   if (path) {
     data = yaml.parse(fs.readFileSync(path, { encoding: 'utf-8'} ));
+    data = mergeDefaultConf(data)
   } else {
     path = Path.join(os.homedir(), '.ut.yaml');
     if (fs.existsSync(path)) {
       data = yaml.parse(fs.readFileSync(path, { encoding: 'utf-8' }));
+      data = mergeDefaultConf(data)
     } else {
       data = require('./default-conf');
       fs.writeFileSync(path, yaml.stringify(data, null, 2) + '\n', { encoding: 'utf-8' });
