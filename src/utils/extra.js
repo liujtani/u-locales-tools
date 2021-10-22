@@ -1,5 +1,6 @@
 const Path = require('path');
 const fs = require('fs');
+const merge = require('lodash/merge');
 const fsp = fs.promises;
 
 const hasChinese = (str) => {
@@ -108,8 +109,15 @@ const pickByKeys = (obj, keys) => {
   }, Array.isArray(obj) ? [] : {})
 }
 
+const mergeLeft = (object, source) => {
+  if (object === source) return object;
+  const newSource = pickBySource(source, object)
+  return merge({}, object, newSource)
+}
+
 module.exports.hasChinese = hasChinese;
 module.exports.walk = walk;
 module.exports.pickBySource = pickBySource;
 module.exports.setBykeys = setByKeys;
 module.exports.pickByKeys = pickByKeys;
+module.exports.mergeLeft = mergeLeft

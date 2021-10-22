@@ -32,9 +32,11 @@ program
 
 program
   .command('apply [tasks...]')
+  .option('--append', '默认情况下，不修改本地中文翻译的内容，这个选项会将上游存在而本地不存在的key添加到本地中文翻译')
   .description('将上游仓库的翻译资源转换并应用到本地项目中')
   .action((tasks, options) => {
     const globalOptions = program.opts();
+    globalOptions.append = options.append
     const config = getConfig(globalOptions, tasks);
     apply(config, options);
   });

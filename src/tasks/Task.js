@@ -3,7 +3,6 @@ const fs = require('fs');
 const fsp = fs.promises;
 const template = require('lodash/template');
 const merge = require('lodash/merge');
-const pickBy = require('lodash/pickBy');
 const invert = require('lodash/invert');
 const assignWith = require('lodash/assignWith');
 const isNil = require('lodash/isNil');
@@ -11,28 +10,11 @@ const cloneDeep = require('lodash/cloneDeep');
 const { serial, deserial } = require('../utils/serial');
 const { parse, stringify, properties } = require('../parse-tool');
 
-const { walk, pickBySource, hasChinese, setBykeys, pickByKeys } = require('../utils/extra');
+const { walk, mergeLeft, hasChinese, setBykeys, pickByKeys } = require('../utils/extra');
 const ptr = require('../utils/ptr');
 const { write, hasLocale } = require('./util');
 const log = require('../utils/log');
 const chalk = require('chalk');
-
-const pickByTemplate = (obj, src, type) => {
-  if (obj === src) return obj;
-  let object;
-  if (type === properties) {
-    object = pickBy(obj, (v, k) => src[k] !== undefined);
-  } else {
-    object = pickBySource(obj, src);
-  }
-  const newObject = {};
-  Object.keys(src).forEach((key) => {
-    if (object[key] !== undefined) {
-      newObject[key] = object[key];
-    }
-  });
-  return Object.assign(newObject, object);
-};
 
 class Task {
   constructor(group, project, config) {
@@ -275,7 +257,7 @@ class StoreTask extends Task {
     const srcTemplateObj = this.getSrcObj(src);
     item.srcTemplateObj = srcTemplateObj;
     if (srcTemplateObj) {
-      srcObj = pickByTemplate(srcObj, srcTemplateObj, srcType);
+      srcObj = mergeLeft(srcTemplateObj, srcObj);
     }
 
     this.omitKeys.forEach((keys) => {
@@ -402,21 +384,20 @@ class ApplyTask extends Task {
       }, {});
     }
 
-    if (locale === 'templates') {
-      srcObj = pickByTemplate(srcObj, dstObj || {}, srcType);
-    }
-
     if (dstType !== properties) {
-      srcObj = deserial(srcObj, dstTemplateObj || dstObj);
+      srcObj = deserial(srcObj, dstTemplateObj || dstObj || {});
     }
 
     if (locale === 'templates') {
-      // dstTemplateObj === dstObj
-      if (dstObj && !hidden) {
-        srcObj = merge(dstObj, srcObj);
+      if (hidden) return
+      if (!dstObj) {
+        item.dstObj = srcObj
+        return
       }
-      if (!hidden) {
-        item.dstObj = srcObj;
+      if (this.config.append) {
+        srcObj = merge(dstObj, srcObj);
+      } else {
+        srcObj = mergeLeft(dstObj, srcObj);
       }
       return;
     }
@@ -430,7 +411,7 @@ class ApplyTask extends Task {
       this.omitKeys.forEach((keys) => {
         setBykeys(dstTemplateObj, keys, undefined);
       });
-      srcObj = pickByTemplate(srcObj, dstTemplateObj, srcType);
+      srcObj = mergeLeft(dstTemplateObj, srcObj);
       srcObj = merge(srcObj, omitObj);
 
       if (this.fillTranslation && this.config.fill) {

@@ -8,7 +8,7 @@ const { deserial } = require('../utils/serial');
 const { write, hasLocale } = require('../tasks/util');
 const chalk = require('chalk');
 const { logList, localeMap, sort } = require('./utils');
-const { pickBySource } = require('../utils/extra');
+const { pickBySource, mergeLeft } = require('../utils/extra');
 
 const load = async (config) => {
   const { repo } = config;
@@ -91,7 +91,11 @@ const apply = async (config, plugins) => {
 
     if (locale === 'templates') {
       if (dstObj && !item.hidden) {
-        item.srcObj = merge(dstObj, item.srcObj);
+        if (config.append) {
+          item.srcObj = merge(dstObj, item.srcObj)
+        } else {
+          item.srcObj = mergeLeft(dstObj, item.srcObj)
+        }
       }
     } else {
       if (dstObj) {
