@@ -4,17 +4,16 @@ const fsp = fs.promises;
 const template = require('lodash/template');
 const merge = require('lodash/merge');
 const invert = require('lodash/invert');
-const assignWith = require('lodash/assignWith');
 const isNil = require('lodash/isNil');
-const cloneDeep = require('lodash/cloneDeep');
 const { serial, deserial } = require('../utils/serial');
 const { parse, stringify, properties } = require('../parse-tool');
 
-const { walk, mergeLeft, hasChinese, setBykeys, pickByKeys } = require('../utils/extra');
+const { walk, mergeLeft, hasChinese, setBykeys, pickBySource, pickByKeys } = require('../utils/extra');
 const ptr = require('../utils/ptr');
 const { write, hasLocale } = require('./util');
 const log = require('../utils/log');
 const chalk = require('chalk');
+const { cloneDeep } = require('lodash');
 
 class Task {
   constructor(group, project, config) {
@@ -389,8 +388,7 @@ class ApplyTask extends Task {
     }
 
     if (locale === 'templates') {
-      if (hidden) return
-      if (!dstObj) {
+      if (hidden || !dstObj) {
         item.dstObj = srcObj
         return
       }
@@ -399,6 +397,7 @@ class ApplyTask extends Task {
       } else {
         srcObj = mergeLeft(dstObj, srcObj);
       }
+      item.dstObj = srcObj
       return;
     }
 
@@ -406,27 +405,17 @@ class ApplyTask extends Task {
       srcObj = merge(dstObj, srcObj);
     }
     if (dstTemplateObj) {
-      dstTemplateObj = cloneDeep(dstTemplateObj);
-      const omitObj = pickByKeys(srcObj, this.omitKeys);
-      this.omitKeys.forEach((keys) => {
-        setBykeys(dstTemplateObj, keys, undefined);
-      });
-      srcObj = mergeLeft(dstTemplateObj, srcObj);
-      srcObj = merge(srcObj, omitObj);
+      if (this.omitKeys.length > 0) {
+        dstTemplateObj = cloneDeep(dstTemplateObj)
+        setBykeys(dstTemplateObj, this.omitKeys, undefined)
+        const omitObj = pickByKeys(dstObj, this.omitKeys)
+        dstTemplateObj = merge(dstTemplateObj, omitObj)
+      }
 
       if (this.fillTranslation && this.config.fill) {
-        if (srcType === properties) {
-          srcObj = assignWith(dstTemplateObj, srcObj, (objValue, srcValue) => {
-            const { message, description } = srcValue;
-            if (!isNil(message)) {
-              objValue.message = message;
-            }
-            objValue.description = description;
-            return objValue;
-          });
-        } else {
-          srcObj = merge(dstTemplateObj, srcObj);
-        }
+        srcObj = mergeLeft(dstTemplateObj, srcObj)
+      } else {
+        srcObj = pickBySource(srcObj, dstTemplateObj)
       }
     }
 

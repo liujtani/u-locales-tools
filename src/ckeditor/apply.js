@@ -103,9 +103,10 @@ const apply = async (config, plugins) => {
       }
   
       if (dstTemplateObj) {
-        item.srcObj = pickBySource(item.srcObj, dstTemplateObj);
         if (config.fill) {
           item.srcObj = merge(cloneDeep(dstTemplateObj), item.srcObj);
+        } else {
+          item.srcObj = pickBySource(item.srcObj, dstTemplateObj);
         }
       }
     }
