@@ -109,10 +109,11 @@ const pickByKeys = (obj, keys) => {
   }, Array.isArray(obj) ? [] : {})
 }
 
+// mergeLeft 会修改 object
 const mergeLeft = (object, source) => {
   if (object === source) return object;
   const newSource = pickBySource(source, object)
-  return merge({}, object, newSource)
+  return merge(object, newSource)
 }
 
 module.exports.hasChinese = hasChinese;
