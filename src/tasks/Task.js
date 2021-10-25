@@ -300,7 +300,7 @@ class StoreTask extends Task {
       }, {});
     }
 
-    item.dstObj = merge(dstObject, dstObj);
+    item.dstObj = merge(dstObj, dstObject);
     // if (!this.config.override) {
     //   item.dstObj = Object.assign(dstObj, item.dstObj)
     // }
