@@ -405,8 +405,8 @@ class ApplyTask extends Task {
       srcObj = merge(dstObj, srcObj);
     }
     if (dstTemplateObj) {
+      dstTemplateObj = cloneDeep(dstTemplateObj)
       if (this.omitKeys.length > 0) {
-        dstTemplateObj = cloneDeep(dstTemplateObj)
         setBykeys(dstTemplateObj, this.omitKeys, undefined)
         const omitObj = pickByKeys(dstObj, this.omitKeys)
         dstTemplateObj = merge(dstTemplateObj, omitObj)
