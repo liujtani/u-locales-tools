@@ -54,6 +54,6 @@ module.exports = {
       alias: 'ds2'
     }
   },
-  excludeLocales: ['pt', 'ru', 'fr', 'ug'],
+  excludeLocales: ['pt', 'ru', 'ug'],
   excludeCkeditor: false // 是否排除ckeditor
 };

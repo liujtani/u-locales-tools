@@ -1,10 +1,8 @@
 module.exports = {
   name: 'exam',
-  groups: [
-    {
-      src: 'src/locales/:locale.json',
-      dst: '手机考试zh.json',
-      desc: '手机考试zh.json'
-    }
-  ]
+  groups: [{
+    src: 'src/locales/:locale.json',
+    dst: 'mobile-exam.json',
+    desc: 'mobile-exam.json'
+  }]
 };
