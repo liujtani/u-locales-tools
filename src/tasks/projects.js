@@ -25,6 +25,8 @@ const examWeb = require('../projects/exam_web')
 
 // 新版讨论项目
 const discussion2 = require('../projects/discussion2')
+// 新版后台项目
+const admin2 = require('../projects/admin-2.0')
 
 module.exports = [
   courseWeb,
@@ -42,5 +44,6 @@ module.exports = [
   homework,
   zambiaAdmin,
   examWeb,
-  discussion2
+  discussion2,
+  admin2
 ];

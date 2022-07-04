@@ -52,7 +52,11 @@ module.exports = {
     },
     discussion2: {
       alias: 'ds2'
-    }
+    },
+    admin2: {
+      alias: 'adm'
+    },
+
   },
   excludeLocales: ['pt', 'ru', 'ug'],
   excludeCkeditor: false // 是否排除ckeditor
